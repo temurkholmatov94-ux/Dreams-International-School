@@ -1,6 +1,7 @@
-// Replace these placeholders with your Supabase Project URL and anon/publishable key.
-// Never put a service_role key in browser code.
+// Public browser configuration. This key is intended for frontend use.
+// Access is restricted by Supabase Auth and Row Level Security.
+// NEVER place a service_role or sb_secret key in this file.
 window.SUPABASE_CONFIG = {
-  url: 'https://YOUR-PROJECT.supabase.co',
-  anonKey: 'YOUR_SUPABASE_ANON_OR_PUBLISHABLE_KEY'
+  url: 'https://nylemvkbhbqkkmemcyvr.supabase.co',
+  anonKey: 'sb_publishable_X_ipo-gBBhDZWk8ezB6f7g_9YvTu36_'
 };
