@@ -160,6 +160,9 @@
      const updatedAt=new Date().toISOString();
      const cloud=await sb.from('school_data').upsert({school_id:profile.school_id,payload,updated_by:session.user.id,updated_at:updatedAt},{onConflict:'school_id'});
      if(cloud.error)throw cloud.error;
+    }
+    if(['owner','admin','teacher'].includes(profile.role)){
+     const updatedAt=new Date().toISOString();
      const academicPayload={students:payload.students||[],groups:payload.groups||[],attendance:payload.attendance||[],lessons:payload.lessons||[],homework:payload.homework||[],assessments:payload.assessments||[],results:payload.results||[]};
      const academic=await sb.from('school_academic_data').upsert({school_id:profile.school_id,payload:academicPayload,updated_by:session.user.id,updated_at:updatedAt},{onConflict:'school_id'});
      if(academic.error)throw academic.error;
@@ -209,16 +212,20 @@
    },
    refreshSharedRecords:async()=>{
     if(!['owner','admin','teacher','accountant'].includes(profile.role))return;
-    const [students,groups,attendance]=await Promise.all([
+    const [students,groups,attendance,homework,results]=await Promise.all([
      sb.from('students').select('external_id,full_name,phone,group_name,monthly_fee,status').eq('school_id',profile.school_id).order('full_name'),
      sb.from('school_groups').select('external_id,name,subject,teacher_name,schedule,monthly_fee').eq('school_id',profile.school_id).order('name'),
-     sb.from('attendance_records').select('student_id,attendance_date,status,note,students!attendance_records_student_school_fk!inner(external_id,full_name)').eq('school_id',profile.school_id).order('attendance_date',{ascending:false}).limit(5000)
+     sb.from('attendance_records').select('student_id,attendance_date,status,note,students!attendance_records_student_school_fk!inner(external_id,full_name)').eq('school_id',profile.school_id).order('attendance_date',{ascending:false}).limit(5000),
+     sb.from('student_homework').select('external_id,title,description,assigned_by,due_date,students!student_homework_student_id_fkey!inner(external_id,full_name)').eq('school_id',profile.school_id).order('due_date',{ascending:true}).limit(5000),
+     sb.from('student_results').select('external_id,assessment,score,max_score,assessment_date,feedback,students!student_results_student_id_fkey!inner(external_id,full_name)').eq('school_id',profile.school_id).order('assessment_date',{ascending:false}).limit(5000)
     ]);
-    for(const r of [students,groups,attendance])if(r.error)throw r.error;
+    for(const r of [students,groups,attendance,homework,results])if(r.error)throw r.error;
     return {
      students:(students.data||[]).map(s=>({id:s.external_id,name:s.full_name,phone:s.phone||'',group:s.group_name||'',fee:Number(s.monthly_fee)||0,status:s.status||'Active'})),
      groups:(groups.data||[]).map(g=>({id:g.external_id,name:g.name,subject:g.subject||'',teacher:g.teacher_name||'',schedule:g.schedule||'',fee:Number(g.monthly_fee)||0})),
-     attendance:(attendance.data||[]).map(r=>({student:r.students?.full_name||'',studentId:r.students?.external_id||null,date:r.attendance_date,status:r.status}))
+     attendance:(attendance.data||[]).map(r=>({student:r.students?.full_name||'',studentId:r.students?.external_id||null,date:r.attendance_date,status:r.status})),
+     homework:(homework.data||[]).map(r=>({id:r.external_id,student:r.students?.full_name||'',studentId:r.students?.external_id||null,title:r.title,description:r.description||'',teacher:r.assigned_by||'',due_date:r.due_date||''})),
+     results:(results.data||[]).map(r=>({id:r.external_id,student:r.students?.full_name||'',studentId:r.students?.external_id||null,assessment:r.assessment,score:Number(r.score)||0,max_score:Number(r.max_score)||100,date:r.assessment_date||'',feedback:r.feedback||''}))
     };
    },
   };
