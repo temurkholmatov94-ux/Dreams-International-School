@@ -566,3 +566,74 @@ a,.text-link{color:#b21b3c!important}
 .status.pending,.status.late{background:#fff5e8!important;color:#9a5b12!important}
 .status.absent,.status.cancelled,.status.inactive{background:#fff0f3!important;color:#b21b3c!important}
 @media(max-width:720px){body{background:radial-gradient(ellipse at 50% 0%,#ffe7ed 0,transparent 30rem),#fff8f9!important}.sidebar{background:#fff!important;box-shadow:0 -5px 25px #8e17300a!important}.topbar{background:#ffffffed!important}}
+
+
+/* ── OXBLOOD CHERRY + ANTIQUE GOLD ── */
+:root{
+ --crimson:#790d27;--crimson-deep:#56091d;--crimson-bright:#a91638;
+ --crimson-soft:#f5e8df;--crimson-line:#e4c9b7;
+ --gold:#b18a45;--gold-deep:#8e6b2f;--gold-soft:#f3ead8;
+ --ink:#291b1c;--muted:#81716d;--line:#e9ded5;--bg:#fbf8f3;
+ --surface:#fffdfa;--canvas:#fbf8f3;--hairline:#e9ded5
+}
+html,body{background:#fbf8f3!important;color:#291b1c!important}
+body{background:radial-gradient(ellipse at 92% 0%,#efe2d1 0,transparent 34rem),#fbf8f3!important}
+.main{background:transparent!important}
+.topbar{background:#fffdf9ed!important;border-color:#e9ded5!important}
+.sidebar{background:linear-gradient(180deg,#fffdfa,#f8f3eb)!important;border-color:#e9ded5!important}
+.brand-mark{background:linear-gradient(145deg,#9e1738,#650b24)!important;box-shadow:0 7px 20px #790d2730!important}
+.brand strong,.profile strong{color:#291b1c!important}
+.school-label{color:#9b8067!important}
+.nav-item{color:#6f5c57!important}
+.nav-item span{color:#a77e53!important}
+.nav-item:hover{background:#f3ead8!important;color:#790d27!important}
+.nav-item.active{background:linear-gradient(100deg,#f1e5d5,#f8f1e8)!important;color:#790d27!important;box-shadow:inset 3px 0 #790d27,inset 0 0 0 1px #e4c9b7!important}
+.nav-item.active span{color:#790d27!important}
+.nav-divider{background:#e9ded5!important}
+.help-card{background:linear-gradient(145deg,#f3ead8,#eadbc4)!important;border-color:#dfc9a8!important;color:#5c3f25!important}
+.help-card p{color:#80694f!important}
+.page-heading{background:linear-gradient(112deg,#fffdfa 0%,#f4eadc 58%,#e9d5bd 100%)!important;border:1px solid #e4c9b7!important;box-shadow:0 18px 48px #790d2710!important}
+.page-heading h1,.page-heading p{color:#291b1c!important}
+.page-heading .eyebrow{color:#790d27!important}
+.page-heading:before{border-color:#c6a878!important;box-shadow:0 0 0 32px #b18a4510,0 0 0 68px #b18a4508,0 0 0 108px #b18a4505!important}
+.page-heading .primary-btn{background:#790d27!important;color:#fff!important}
+.command-hero{background:linear-gradient(112deg,#fffdfa 0%,#f4eadc 58%,#ead8c3 100%)!important;border:1px solid #e4c9b7!important;box-shadow:0 22px 55px #790d2710!important}
+.command-copy h2{color:#291b1c!important}
+.command-copy p{color:#75645d!important}
+.command-kicker{color:#790d27!important}
+.command-kicker i{background:#b18a45!important;box-shadow:0 0 0 5px #b18a4518!important}
+.command-copy h2 em{color:#790d27!important}
+.command-primary{background:linear-gradient(135deg,#941333,#650b24)!important;color:#fff!important;box-shadow:0 8px 24px #790d2730!important}
+.command-ghost{background:#fffdfa!important;border-color:#dfc9a8!important;color:#790d27!important}
+.art-core{background:linear-gradient(145deg,#a91638,#650b24)!important;color:#fff!important;box-shadow:0 18px 60px #790d2730,0 0 60px #b18a4524!important}
+.art-node{background:#fffdfa!important;color:#8e6b2f!important;border-color:#dfc9a8!important}
+.metric-ribbon,.stat-card,.panel,.page-panel,.finance-panel,.test-studio,.staff-panel,.settings-panel,.insight-stage,.action-stage,.activity-stage{background:#fffdfa!important;border:1px solid #e9ded5!important;color:#291b1c!important;box-shadow:0 8px 28px #4c2a1a0b!important}
+.metric-lead span,.section-overline{color:#8e6b2f!important}
+.metric-icon,.metric-icon.mint,.metric-icon.lilac,.metric-icon.peach,.metric-icon.blue,.stat-icon,.stat-card:nth-child(n) .stat-icon{background:#f3ead8!important;color:#790d27!important}
+.stat-card:before,.stat-card:nth-child(n):before{background:#f3ead8!important}
+.stage-link{background:#f3ead8!important;color:#790d27!important}
+.orbit-income{background:linear-gradient(180deg,#a91638,#650b24)!important}
+.orbit-expense{background:linear-gradient(180deg,#c4a56d,#8e6b2f)!important}
+.legend-income{background:#790d27!important}.legend-expense{background:#b18a45!important}
+.launch-violet,.launch-mint,.launch-peach,.launch-blue{background:#fbf7ef!important;border-color:#e9ded5!important;color:#6e152b!important}
+.launch-spark{background:#f3ead8!important;color:#8e6b2f!important}
+.launch-tile:hover{box-shadow:0 10px 25px #790d2714!important;border-color:#d7c09e!important}
+.next-step-card{background:linear-gradient(145deg,#f3ead8,#eadbc4)!important;border-color:#dfc9a8!important;color:#291b1c!important}
+.next-step-card p,.next-step-card small{color:#75645d!important}
+.next-step-card button{background:#790d27!important;color:#fff!important}
+.primary-btn,button.primary,.btn-primary{background:linear-gradient(135deg,#941333,#650b24)!important;color:#fff!important;box-shadow:0 6px 18px #790d2724!important}
+.secondary-btn,.toolbar .secondary-btn{background:#f3ead8!important;color:#6e152b!important;border:1px solid #dfc9a8!important}
+.quick-action{background:#fffdfa!important;border-color:#e9ded5!important;color:#291b1c!important}
+.quick-action span{color:#8e6b2f!important}
+.quick-action:hover{background:#fbf7ef!important;border-color:#d7c09e!important}
+input,select,textarea,.search,.select{background:#fffdfa!important;color:#291b1c!important;border-color:#e4d8cd!important}
+input:focus,select:focus,textarea:focus{border-color:#9a2844!important;box-shadow:0 0 0 3px #790d2714!important}
+th{color:#8e796e!important;border-color:#e9ded5!important}
+td{color:#6f5c57!important;border-color:#f0e8df!important}
+tbody tr:hover td{background:#fbf7ef!important}
+.mini-avatar{background:#f3ead8!important;color:#790d27!important}
+.tag{background:#f3ead8!important;color:#790d27!important}
+.modal,.modal-card,.dialog{background:#fffdfa!important;color:#291b1c!important;border-color:#e9ded5!important}
+a,.text-link{color:#790d27!important}
+.status.absent,.status.cancelled,.status.inactive{background:#f5e8df!important;color:#790d27!important}
+@media(max-width:720px){body{background:radial-gradient(ellipse at 50% 0%,#efe2d1 0,transparent 30rem),#fbf8f3!important}.sidebar{background:#fffdfa!important}}
