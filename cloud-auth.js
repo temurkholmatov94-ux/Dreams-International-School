@@ -26,12 +26,14 @@
   if(links.error)throw links.error;
   const ids=(links.data||[]).map(x=>x.student_id);
   if(!ids.length){window.schoolApp.showParentPortal([],[],profile);return}
-  const [students,attendance]=await Promise.all([
+  const [students,attendance,homework,results]=await Promise.all([
    sb.from('students').select('id,full_name,group_name').in('id',ids).order('full_name'),
-   sb.from('attendance_records').select('id,student_id,attendance_date,status,note').in('student_id',ids).order('attendance_date',{ascending:false}).limit(100)
+   sb.from('attendance_records').select('id,student_id,attendance_date,status,note').in('student_id',ids).order('attendance_date',{ascending:false}).limit(100),
+   sb.from('student_homework').select('id,student_id,title,description,due_date,assigned_by').in('student_id',ids).order('due_date',{ascending:true}).limit(100),
+   sb.from('student_results').select('id,student_id,assessment,score,max_score,assessment_date,feedback').in('student_id',ids).order('assessment_date',{ascending:false}).limit(100)
   ]);
-  if(students.error)throw students.error;if(attendance.error)throw attendance.error;
-  window.schoolApp.showParentPortal(students.data||[],attendance.data||[],profile);
+  if(students.error)throw students.error;if(attendance.error)throw attendance.error;if(homework.error)throw homework.error;if(results.error)throw results.error;
+  window.schoolApp.showParentPortal(students.data||[],attendance.data||[],profile,homework.data||[],results.data||[]);
   if(window.schoolCloud.realtimeChannel)await sb.removeChannel(window.schoolCloud.realtimeChannel);
   const channel=sb.channel('parent-attendance-'+profile.school_id).on('postgres_changes',{event:'*',schema:'public',table:'attendance_records',filter:'school_id=eq.'+profile.school_id},async()=>{try{await loadParent(profile)}catch(e){console.error('Attendance refresh failed',e)}}).subscribe();
   window.schoolCloud.realtimeChannel=channel;
@@ -73,6 +75,10 @@
     const idByExternal=new Map((stored.data||[]).map(s=>[String(s.external_id),s.id]));
     const rows=(payload.attendance||[]).map(a=>{const external=String(a.studentId??(payload.students||[]).find(s=>s.name===a.student)?.id??'');const studentId=idByExternal.get(external);if(!studentId)return null;return {school_id:profile.school_id,student_id:studentId,attendance_date:a.date,status:a.status,marked_by:session.user.id}}).filter(Boolean);
     if(rows.length){const saved=await sb.from('attendance_records').upsert(rows,{onConflict:'student_id,attendance_date'});if(saved.error)console.error('Attendance sync failed:',saved.error)}
+    const homeworkRows=(payload.homework||[]).map(x=>{const student= idByExternal.get(String((payload.students||[]).find(st=>st.name===x.student)?.id??''));return student?{school_id:profile.school_id,student_id:student,external_id:String(x.id),title:x.title,description:x.description||null,assigned_by:x.teacher||null,due_date:x.due_date||null}:null}).filter(Boolean);
+    if(homeworkRows.length){const saved=await sb.from('student_homework').upsert(homeworkRows,{onConflict:'school_id,external_id,student_id'});if(saved.error)console.error('Homework sync failed:',saved.error)}
+    const resultRows=(payload.results||[]).map(x=>{const student=idByExternal.get(String((payload.students||[]).find(st=>st.name===x.student)?.id??''));return student?{school_id:profile.school_id,student_id:student,external_id:String(x.id),assessment:x.assessment,score:Number(x.score)||0,max_score:Number(x.max_score)||100,assessment_date:x.date||null,feedback:x.feedback||null}:null}).filter(Boolean);
+    if(resultRows.length){const saved=await sb.from('student_results').upsert(resultRows,{onConflict:'school_id,external_id,student_id'});if(saved.error)console.error('Results sync failed:',saved.error)}
    }
   };
   if(profile.role!=='parent'&&d.data?.payload){
