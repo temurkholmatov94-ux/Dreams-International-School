@@ -210,3 +210,17 @@ drop policy if exists results_staff_delete on public.student_results;
 create policy results_admin_delete on public.student_results for delete to authenticated using (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=student_results.school_id and p.role in ('owner','admin')));
 drop policy if exists attendance_staff_delete on public.attendance_records;
 create policy attendance_admin_delete on public.attendance_records for delete to authenticated using (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=attendance_records.school_id and p.role in ('owner','admin')));
+
+-- Remove legacy FOR ALL policies so they cannot override the stricter role-specific rules.
+drop policy if exists students_staff_manage on public.students;
+drop policy if exists groups_staff_manage on public.school_groups;
+drop policy if exists attendance_staff_manage on public.attendance_records;
+drop policy if exists homework_staff_manage on public.student_homework;
+drop policy if exists results_staff_manage on public.student_results;
+-- Remove default browser grants; RLS policies are the only authorization layer for authenticated users.
+revoke all privileges on table public.students, public.school_groups, public.attendance_records, public.student_homework, public.student_results, public.parent_student_links from public, anon;
+revoke truncate, references, trigger on table public.students, public.school_groups, public.attendance_records, public.student_homework, public.student_results, public.parent_student_links from authenticated;
+grant select, insert, update, delete on table public.students, public.school_groups, public.attendance_records, public.student_homework, public.student_results, public.parent_student_links to authenticated;
+revoke all privileges on table public.schools, public.school_profiles from public, anon;
+revoke insert, update, delete, truncate, references, trigger on table public.schools, public.school_profiles from authenticated;
+grant select on table public.schools, public.school_profiles to authenticated;
