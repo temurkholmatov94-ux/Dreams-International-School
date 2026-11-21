@@ -38,6 +38,10 @@
   const channel=sb.channel('parent-attendance-'+profile.school_id).on('postgres_changes',{event:'*',schema:'public',table:'attendance_records',filter:'school_id=eq.'+profile.school_id},async()=>{try{await loadParent(profile)}catch(e){console.error('Attendance refresh failed',e)}}).subscribe();
   window.schoolCloud.realtimeChannel=channel;
  }
+ async function refreshFinanceSafely(){
+  try{const records=await window.schoolCloud?.getFinanceTransactions?.();if(records)window.schoolApp?.mergeFinanceData(records)}
+  catch(e){console.error('Finance live refresh failed:',e)}
+ }
  async function refreshSharedRecordsSafely(){
   try{const shared=await window.schoolCloud?.refreshSharedRecords?.();if(shared)window.schoolApp?.mergeSharedData(shared)}
   catch(e){console.error('Live school data refresh failed:',e)}
@@ -66,6 +70,23 @@
     return saved.data;
    },
    inviteParent:async payload=>{const student=await sb.from('students').select('id').eq('school_id',profile.school_id).eq('external_id',String(payload.student_id)).single();if(student.error)throw new Error('Could not find the selected student in the cloud. Save the student record first.');const {data,error}=await sb.functions.invoke('invite-parent',{body:{...payload,student_id:student.data.id}});if(error)throw error;if(data?.error)throw new Error(data.error);return data},
+   deleteFinanceTransaction:async(type,id)=>{
+    if(!['owner','admin','accountant'].includes(profile.role))throw new Error('Only finance staff can remove transactions.');
+    const prefix=type==='payments'?'payment:':type==='expenses'?'expense:':null;
+    if(!prefix)throw new Error('Unsupported finance record type.');
+    const removed=await sb.from('finance_transactions').delete().eq('school_id',profile.school_id).eq('external_id',prefix+String(id));
+    if(removed.error)throw removed.error;
+   },
+   getFinanceTransactions:async()=>{
+    if(!['owner','admin','accountant'].includes(profile.role))throw new Error('Finance access is restricted to authorised finance staff.');
+    const result=await sb.from('finance_transactions').select('external_id,transaction_type,student_name,group_name,title,category,amount,transaction_date,payment_method,status,billing_period').eq('school_id',profile.school_id).order('transaction_date',{ascending:false}).limit(5000);
+    if(result.error)throw result.error;
+    const rows=result.data||[];
+    return {
+     payments:rows.filter(x=>x.transaction_type==='tuition').map(x=>({id:Number(x.external_id.replace(/^payment:/,''))||x.external_id,student:x.student_name||'',group:x.group_name||'',amount:Number(x.amount)||0,date:x.transaction_date,method:x.payment_method||'Pending',status:x.status,billing_period:x.billing_period||undefined})),
+     expenses:rows.filter(x=>x.transaction_type==='expense').map(x=>({id:Number(x.external_id.replace(/^expense:/,''))||x.external_id,title:x.title||'Expense',category:x.category||'Other',amount:Number(x.amount)||0,date:x.transaction_date}))
+    };
+   },
    getAnalytics:async()=>{
     if(!['owner','admin','teacher','accountant'].includes(profile.role))throw new Error('Your account cannot view centre analytics.');
     const since=new Date();since.setDate(since.getDate()-30);
@@ -92,10 +113,17 @@
     return result.data||[];
    },
    save:async payload=>{
-    if(!['owner','admin','teacher'].includes(profile.role))return;
+    if(!['owner','admin','teacher','accountant'].includes(profile.role))return;
     if(['owner','admin'].includes(profile.role)){
      const cloud=await sb.from('school_data').upsert({school_id:profile.school_id,payload,updated_by:session.user.id,updated_at:new Date().toISOString()},{onConflict:'school_id'});
      if(cloud.error)throw cloud.error;
+    }
+    if(['owner','admin','accountant'].includes(profile.role)){
+     const financeRows=[
+      ...(payload.payments||[]).map(x=>({school_id:profile.school_id,external_id:'payment:'+String(x.id),transaction_type:'tuition',student_name:x.student||null,group_name:x.group||null,title:'Tuition payment',amount:Number(x.amount)||0,transaction_date:x.date||new Date().toISOString().slice(0,10),payment_method:x.method||null,status:x.status||'Pending',billing_period:x.billing_period||null,created_by:session.user.id})),
+      ...(payload.expenses||[]).map(x=>({school_id:profile.school_id,external_id:'expense:'+String(x.id),transaction_type:'expense',title:x.title||'Expense',category:x.category||'Other',amount:Number(x.amount)||0,transaction_date:x.date||new Date().toISOString().slice(0,10),status:'Paid',created_by:session.user.id}))
+     ];
+     if(financeRows.length){const saved=await sb.from('finance_transactions').upsert(financeRows,{onConflict:'school_id,external_id'});if(saved.error)throw saved.error}
     }
     const localGroups=(payload.groups||[]).map(g=>({school_id:profile.school_id,external_id:String(g.id),name:String(g.name||'').trim(),subject:g.subject||null,teacher_name:g.teacher||null,schedule:g.schedule||null,monthly_fee:Number(g.fee)||0})).filter(g=>g.name);
     if(localGroups.length){
@@ -158,11 +186,13 @@
   if(d.data?.payload&&Object.keys(d.data.payload).length&&window.schoolApp)window.schoolApp.setData(d.data.payload);
   if(profile.role!=='parent'&&window.schoolCloud.refreshSharedRecords){
    try{const shared=await window.schoolCloud.refreshSharedRecords();window.schoolApp?.mergeSharedData(shared)}catch(e){console.error('Shared records refresh failed:',e)}
+   if(['owner','admin','accountant'].includes(profile.role)){try{const finance=await window.schoolCloud.getFinanceTransactions();window.schoolApp?.mergeFinanceData(finance)}catch(e){console.error('Finance records refresh failed:',e)}}
    if(window.schoolCloud.realtimeChannel)await sb.removeChannel(window.schoolCloud.realtimeChannel);
    window.schoolCloud.realtimeChannel=sb.channel('school-live-'+profile.school_id)
     .on('postgres_changes',{event:'*',schema:'public',table:'students',filter:'school_id=eq.'+profile.school_id},refreshSharedRecordsSafely)
     .on('postgres_changes',{event:'*',schema:'public',table:'school_groups',filter:'school_id=eq.'+profile.school_id},refreshSharedRecordsSafely)
     .on('postgres_changes',{event:'*',schema:'public',table:'attendance_records',filter:'school_id=eq.'+profile.school_id},refreshSharedRecordsSafely)
+    .on('postgres_changes',{event:'*',schema:'public',table:'finance_transactions',filter:'school_id=eq.'+profile.school_id},refreshFinanceSafely)
     .subscribe();
   }
   if(profile.role==='owner'||profile.role==='admin'){
