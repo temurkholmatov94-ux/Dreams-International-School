@@ -19,5 +19,8 @@ Open `index.html` in a modern browser. No build step is required.
 3. Select `main` and `/ (root)`, then Save.
 4. Wait for Pages to deploy and open the provided URL.
 
+## Supabase authentication and shared-data setup
+See [SETUP.md](SETUP.md) for instructions to create a Supabase project, run the secured schema, configure browser keys, provision the first owner, and publish with GitHub Pages.
+
 ## Important prototype limitations
 This first version stores its records in browser `localStorage` on the device/browser that enters them. It does **not** yet provide secure user accounts, multi-device synchronisation, shared cloud database, role permissions, or automatic cloud backups. Sample names and amounts are demonstration data. Do not enter sensitive student information until a secure backend, authentication, permissions, and backup process are implemented.
