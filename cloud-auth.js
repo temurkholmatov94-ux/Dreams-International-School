@@ -79,12 +79,26 @@
      if(removed.error)throw removed.error;
      return;
     }
-    if(!['owner','admin','teacher'].includes(profile.role))throw new Error('Your account cannot remove this school record.');
-    const targets={students:['students','external_id'],groups:['school_groups','external_id'],results:['student_results','external_id']};
-    const target=targets[type];
-    if(!target)return;
-    const removed=await sb.from(target[0]).delete().eq('school_id',profile.school_id).eq(target[1],recordId);
-    if(removed.error)throw removed.error;
+    const tableTargets={students:['students','external_id'],groups:['school_groups','external_id'],results:['student_results','external_id']};
+    if(tableTargets[type]){
+     if(!['owner','admin','teacher'].includes(profile.role))throw new Error('Your account cannot remove this school record.');
+     const [table,key]=tableTargets[type];
+     const removed=await sb.from(table).delete().eq('school_id',profile.school_id).eq(key,recordId);
+     if(removed.error)throw removed.error;
+     return;
+    }
+    const workspaceTargets={teachers:'teachers',lessons:'lessons',homework:'homework',assessments:'assessments'};
+    if(workspaceTargets[type]){
+     if(!['owner','admin'].includes(profile.role))throw new Error('Only school administrators can remove this record.');
+     const current=await sb.from('school_data').select('payload').eq('school_id',profile.school_id).single();
+     if(current.error)throw current.error;
+     const payload=current.data.payload||{};
+     payload[type]=(payload[type]||[]).filter(row=>String(row.id)!==recordId);
+     const saved=await sb.from('school_data').update({payload,updated_by:session.user.id,updated_at:new Date().toISOString()}).eq('school_id',profile.school_id);
+     if(saved.error)throw saved.error;
+     return;
+    }
+    throw new Error('This record type is not supported for cloud deletion.');
    },
    deleteFinanceTransaction:async(type,id)=>{
     if(!['owner','admin','accountant'].includes(profile.role))throw new Error('Only finance staff can remove transactions.');
