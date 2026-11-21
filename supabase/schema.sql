@@ -154,6 +154,12 @@ create policy parent_links_staff_manage on public.parent_student_links for all t
 using (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=parent_student_links.school_id and p.role in ('owner','admin')))
 with check (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=parent_student_links.school_id and p.role in ('owner','admin')));
 
+-- Restrict finance table grants; RLS further scopes access by school and role.
+revoke all privileges on table public.finance_transactions from public, anon;
+revoke truncate, references, trigger on table public.finance_transactions from authenticated;
+grant select, insert, update on table public.finance_transactions to authenticated;
+revoke delete on table public.finance_transactions from public, anon, authenticated;
+
 -- Keep parent accounts out of the all-school JSON workspace.
 drop policy if exists school_data_read_school_members on public.school_data;
 create policy school_data_read_school_members on public.school_data for select to authenticated
