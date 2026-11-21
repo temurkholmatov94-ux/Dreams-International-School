@@ -345,7 +345,16 @@ function render(){
  if(page==='reports')loadAdvancedAnalytics();
  if(window.schoolApp)window.schoolApp.applyPermissions();
 }
-function go(p){page=p;render();document.querySelector('#sidebar').classList.remove('open')}
+function canOpenPage(p){
+ const role=window.schoolCloud?.profile?.role;
+ if(!window.schoolCloud||role==='owner'||role==='admin')return true;
+ const allowed={
+  teacher:['dashboard','students','groups','attendance','classroom','results','performance','teststudio','reports'],
+  accountant:['dashboard','payments','expenses','finance','reports']
+ };
+ return (allowed[role]||[]).includes(p);
+}
+function go(p){if(!canOpenPage(p)){notify('Your account does not have access to this section.');return}page=p;render();document.querySelector('#sidebar').classList.remove('open')}
 // Robust delegated navigation: keeps sidebar links working after every render.
 document.addEventListener('click',e=>{const nav=e.target.closest('.nav-item[data-page], [data-page]:not(.nav-item)');if(!nav)return;e.preventDefault();go(nav.dataset.page)},{capture:true});
 
@@ -391,11 +400,33 @@ function showParentPortal(children,records,profile,homework=[],results=[]){
  document.querySelector('#pageTitle').textContent='Family attendance portal';document.querySelector('#pageSubtitle').textContent='Welcome, '+esc(profile.full_name)+'. Attendance updates from your learning centre appear here.';document.querySelector('#breadcrumbTitle').textContent='Family portal';document.querySelector('#quickAdd').hidden=true;document.querySelector('#pageContent').innerHTML=cards?summary+alert+cards:'<section class="panel"><h3>No student linked yet</h3><p class="muted-note">Please contact your learning centre to connect your parent account to a student.</p></section>';
 }
 
-window.schoolApp={showParentPortal, setData(data){if(!data||typeof data!=='object')return;db={...structuredClone(initial),...data};localStorage.setItem(STORE,JSON.stringify(db));render()},applyPermissions(){const role=window.schoolCloud?.profile?.role,canManage=!window.schoolCloud||window.schoolCloud.canManage,canFinance=['owner','admin','accountant'].includes(role);document.querySelectorAll('[data-modal]').forEach(el=>{const allowed=canManage||(canFinance&&['payments','expenses'].includes(el.dataset.modal));if(!allowed){el.disabled=true;el.hidden=true}});document.querySelectorAll('[data-delete]').forEach(el=>{const allowed=canManage||(canFinance&&['payments','expenses'].includes(el.dataset.delete));if(!allowed){el.disabled=true;el.hidden=true}});const quick=document.querySelector('#quickAdd');if(quick&&!canManage){quick.disabled=true;quick.hidden=true}const attendanceSave=document.querySelector('#saveAttendance');if(attendanceSave&&!canManage){attendanceSave.disabled=true;attendanceSave.hidden=true}document.querySelectorAll('.attendance-choice').forEach(el=>{el.disabled=!canManage})}};
 window.schoolApp={showParentPortal, setData(data){if(!data||typeof data!=='object')return;db={...structuredClone(initial),...data};localStorage.setItem(STORE,JSON.stringify(db));render()},mergeSharedData(shared){
  if(!shared)return;
  if(Array.isArray(shared.students))db.students=shared.students;
  if(Array.isArray(shared.groups))db.groups=shared.groups;
  if(Array.isArray(shared.attendance))db.attendance=shared.attendance;
  localStorage.setItem(STORE,JSON.stringify(db));render();
-},mergeFinanceData(records){if(!records)return;if(Array.isArray(records.payments))db.payments=records.payments;if(Array.isArray(records.expenses))db.expenses=records.expenses;localStorage.setItem(STORE,JSON.stringify(db));render()},applyPermissions(){const canManage=!window.schoolCloud||window.schoolCloud.canManage;document.querySelectorAll('[data-modal],[data-delete],#quickAdd,#saveAttendance').forEach(el=>{if(!canManage){el.disabled=true;el.hidden=true}});document.querySelectorAll('.attendance-choice').forEach(el=>{el.disabled=!canManage})}};
+},mergeFinanceData(records){if(!records)return;if(Array.isArray(records.payments))db.payments=records.payments;if(Array.isArray(records.expenses))db.expenses=records.expenses;localStorage.setItem(STORE,JSON.stringify(db));render()},applyPermissions(){
+ const role=window.schoolCloud?.profile?.role;
+ const preview=!window.schoolCloud;
+ const admin=preview||role==='owner'||role==='admin';
+ const teacher=role==='teacher';
+ const accountant=role==='accountant';
+ const allowedPages=admin?null:teacher?['dashboard','students','groups','attendance','classroom','results','performance','teststudio','reports']:accountant?['dashboard','payments','expenses','finance','reports']:[];
+ document.querySelectorAll('.nav-item[data-page]').forEach(el=>{
+  const allowed=admin||allowedPages.includes(el.dataset.page);
+  el.hidden=!allowed;el.disabled=!allowed;
+ });
+ const canAdd=type=>admin||(teacher&&['students','groups','results','homework'].includes(type))||(accountant&&['payments','expenses'].includes(type));
+ document.querySelectorAll('[data-modal]').forEach(el=>{const allowed=canAdd(el.dataset.modal);el.hidden=!allowed;el.disabled=!allowed});
+ const canRemove=type=>admin||(teacher&&['students','groups','results'].includes(type))||(accountant&&['payments','expenses'].includes(type));
+ document.querySelectorAll('[data-delete]').forEach(el=>{const allowed=canRemove(el.dataset.delete);el.hidden=!allowed;el.disabled=!allowed});
+ const quick=document.querySelector('#quickAdd');
+ if(quick){
+  const quickTargets={dashboard:admin||teacher?'students':null,students:admin||teacher?'students':null,teachers:admin?'teachers':null,groups:admin||teacher?'groups':null,attendance:admin||teacher?'attendance':null,payments:admin||accountant?'payments':null,expenses:admin||accountant?'expenses':null};
+  const target=quickTargets[page]||null;quick.hidden=!target;quick.disabled=!target;
+ }
+ const attendanceSave=document.querySelector('#saveAttendance');
+ if(attendanceSave){const allowed=admin||teacher;attendanceSave.hidden=!allowed;attendanceSave.disabled=!allowed}
+ document.querySelectorAll('.attendance-choice').forEach(el=>{el.disabled=!(admin||teacher)});
+}};
