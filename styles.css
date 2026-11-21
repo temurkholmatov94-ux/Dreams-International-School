@@ -711,3 +711,55 @@ tbody tr:hover td{background:#fff9fa!important}
 a,.text-link{color:#790d27!important}
 .status.absent,.status.cancelled,.status.inactive{background:#f9edf1!important;color:#790d27!important}
 @media(max-width:720px){body{background:#faf9fa!important}.sidebar{background:#260914!important}.topbar{background:#fff!important}}
+
+
+/* ── DASHBOARD OVERVIEW: CRIMSON EDITION ── */
+.command-hero{
+ background:linear-gradient(118deg,#3b0818 0%,#650b24 52%,#95183b 100%)!important;
+ border:1px solid #7c1834!important;
+ box-shadow:0 18px 42px #650b2426!important;color:#fff!important;
+}
+.command-copy h2,.command-copy h2 em{color:#fff!important}
+.command-copy h2 em{-webkit-text-fill-color:#f3c6d1!important}
+.command-copy p{color:#f0d9df!important}
+.command-kicker{color:#f3c6d1!important}
+.command-kicker i{background:#f2b6c5!important;box-shadow:0 0 0 5px #ffffff1c!important}
+.command-primary{background:#fff!important;color:#650b24!important;box-shadow:0 8px 22px #25000d35!important}
+.command-ghost{background:#ffffff12!important;border:1px solid #ffffff55!important;color:#fff!important}
+.command-date{color:#f1dce2!important}
+.command-date span,.command-date strong{color:#f1dce2!important}
+.art-core{background:linear-gradient(145deg,#fff,#f8e9ed)!important;color:#650b24!important;box-shadow:0 18px 55px #21000b55!important}
+.art-core small{color:#8d2845!important}
+.art-node{background:#fff!important;color:#8b1232!important;border:1px solid #f0d6de!important}
+.art-orbit{border-color:#ffffff32!important}
+.metric-ribbon{
+ background:linear-gradient(110deg,#4b091d,#710d2b 60%,#8d1739)!important;
+ border:1px solid #7b1b37!important;box-shadow:0 12px 30px #650b241c!important;color:#fff!important;
+}
+.metric-lead span,.metric-lead strong,.metric-lead small{color:#fff!important}
+.metric-lead span{opacity:.78}
+.metric-item{border-color:#ffffff24!important}
+.metric-item small,.metric-item em{color:#f2dce2!important}
+.metric-item strong{color:#fff!important}
+.metric-icon,.metric-icon.mint,.metric-icon.lilac,.metric-icon.peach,.metric-icon.blue{
+ background:#ffffff1b!important;color:#fff!important;border:1px solid #ffffff24!important;
+}
+.command-grid .section-overline,.activity-stage .section-overline,.dashboard-lower .section-overline{color:#8e1233!important}
+.command-grid .stage-link,.activity-stage .stage-link{background:#f9edf1!important;color:#790d27!important;border:1px solid #efdce2!important}
+.orbit-chart-total strong{color:#650b24!important}
+.orbit-income{background:linear-gradient(180deg,#d84b70,#790d27)!important}
+.legend-income{background:#790d27!important}
+.launch-tile{background:#fff!important;border:1px solid #eee0e4!important}
+.launch-tile>span,.launch-spark{background:#f9edf1!important;color:#8e1233!important}
+.launch-tile strong{color:#321c23!important}
+.launch-tile small{color:#81747a!important}
+.launch-tile:hover{border-color:#c77a90!important;box-shadow:0 10px 24px #650b2415!important}
+.next-step-card{background:linear-gradient(145deg,#4b091d,#790d27)!important;border:1px solid #8e2442!important;color:#fff!important}
+.next-step-card h3,.next-step-card .section-overline{color:#fff!important}
+.next-step-card p,.next-step-card small{color:#f0d9df!important}
+.next-step-card button{background:#fff!important;color:#650b24!important}
+.next-step-orb{color:#ffffff18!important}
+@media(max-width:720px){
+ .command-hero{background:linear-gradient(145deg,#3b0818,#790d27)!important}
+ .metric-ribbon{background:linear-gradient(145deg,#4b091d,#790d27)!important}
+}
