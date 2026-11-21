@@ -26,3 +26,21 @@
 .cell-sub{display:block;color:#8b95a7;font-size:10px;margin-top:3px}
 .classroom-panel .panel-header{gap:12px}
 .classroom-panel .primary-btn{white-space:nowrap}
+
+.test-studio{padding:22px}
+.test-builder{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:20px 0}
+.test-builder .primary-btn{align-self:end;min-height:42px}
+.test-preview{margin-top:18px}
+.test-paper{background:#fff;border:1px solid #e7eaf0;border-radius:12px;padding:28px;color:#202b42}
+.test-paper-head{text-align:center;border-bottom:1px solid #e7eaf0;padding-bottom:18px}
+.test-paper-head>span{font-size:10px;letter-spacing:2px;color:#64718a;font-weight:700}
+.test-paper-head h2{font-size:21px;margin:10px 0 6px}
+.test-paper-head p{font-size:12px;color:#7c879c}
+.test-student-line{margin-top:20px;font-size:12px;text-align:left}
+.test-question{padding:15px 0;border-bottom:1px solid #eef0f4;font-size:13px;break-inside:avoid}
+.test-options{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;color:#56627a}
+.test-actions{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+.secondary-btn{border:1px solid #dfe4ee;background:#fff;color:#34415c;border-radius:8px;padding:10px 14px;font-weight:700;cursor:pointer}
+.empty-state{text-align:center;padding:32px;color:#78849a;background:#f8f9fc;border-radius:10px}
+.empty-state strong{color:#34415c}
+@media(max-width:640px){.test-builder{grid-template-columns:1fr}.test-studio{padding:16px}.test-paper{padding:18px}.test-options{grid-template-columns:1fr}}
