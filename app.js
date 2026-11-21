@@ -419,13 +419,13 @@ window.schoolApp={showParentPortal, setData(data){if(!data||typeof data!=='objec
   const allowed=admin||allowedPages.includes(el.dataset.page);
   el.hidden=!allowed;el.disabled=!allowed;
  });
- const canAdd=type=>admin||(teacher&&['students','groups','results','homework'].includes(type))||(accountant&&['payments','expenses'].includes(type));
+ const canAdd=type=>admin||(teacher&&['results','homework'].includes(type))||(accountant&&['payments','expenses'].includes(type));
  document.querySelectorAll('[data-modal]').forEach(el=>{const allowed=canAdd(el.dataset.modal);el.hidden=!allowed;el.disabled=!allowed});
- const canRemove=type=>admin||(teacher&&['students','groups','results'].includes(type))||(accountant&&['payments','expenses'].includes(type));
+ const canRemove=type=>admin||(accountant&&['payments','expenses'].includes(type));
  document.querySelectorAll('[data-delete]').forEach(el=>{const allowed=canRemove(el.dataset.delete);el.hidden=!allowed;el.disabled=!allowed});
  const quick=document.querySelector('#quickAdd');
  if(quick){
-  const quickTargets={dashboard:admin||teacher?'students':null,students:admin||teacher?'students':null,teachers:admin?'teachers':null,groups:admin||teacher?'groups':null,attendance:admin||teacher?'attendance':null,payments:admin||accountant?'payments':null,expenses:admin||accountant?'expenses':null};
+  const quickTargets={dashboard:admin?'students':null,students:admin?'students':null,teachers:admin?'teachers':null,groups:admin?'groups':null,attendance:admin||teacher?'attendance':null,payments:admin||accountant?'payments':null,expenses:admin||accountant?'expenses':null};
   const target=quickTargets[page]||null;quick.hidden=!target;quick.disabled=!target;
  }
  const attendanceSave=document.querySelector('#saveAttendance');
