@@ -93,7 +93,7 @@
     }
     const tableTargets={students:['students','external_id'],groups:['school_groups','external_id'],results:['student_results','external_id']};
     if(tableTargets[type]){
-     if(!['owner','admin','teacher'].includes(profile.role))throw new Error('Your account cannot remove this school record.');
+     if(!['owner','admin'].includes(profile.role))throw new Error('Only school owners and administrators can remove student, group or result records.');
      const [table,key]=tableTargets[type];
      const removed=await sb.from(table).delete().eq('school_id',profile.school_id).eq(key,recordId);
      if(removed.error)throw removed.error;
@@ -163,7 +163,13 @@
     }
     if(['owner','admin','teacher'].includes(profile.role)){
      const updatedAt=new Date().toISOString();
-     const academicPayload={students:payload.students||[],groups:payload.groups||[],attendance:payload.attendance||[],lessons:payload.lessons||[],homework:payload.homework||[],assessments:payload.assessments||[],results:payload.results||[]};
+     let academicPayload={students:payload.students||[],groups:payload.groups||[],attendance:payload.attendance||[],lessons:payload.lessons||[],homework:payload.homework||[],assessments:payload.assessments||[],results:payload.results||[]};
+     if(profile.role==='teacher'){
+      const existing=await sb.from('school_academic_data').select('payload').eq('school_id',profile.school_id).maybeSingle();
+      if(existing.error)throw existing.error;
+      const current=existing.data?.payload||{};
+      academicPayload={...current,attendance:academicPayload.attendance,lessons:academicPayload.lessons,homework:academicPayload.homework,assessments:academicPayload.assessments,results:academicPayload.results};
+     }
      const academic=await sb.from('school_academic_data').upsert({school_id:profile.school_id,payload:academicPayload,updated_by:session.user.id,updated_at:updatedAt},{onConflict:'school_id'});
      if(academic.error)throw academic.error;
     }
@@ -175,15 +181,11 @@
      if(financeRows.length){const saved=await sb.from('finance_transactions').upsert(financeRows,{onConflict:'school_id,external_id'});if(saved.error)throw saved.error}
     }
     if(profile.role==='accountant')return;
-    const localGroups=(payload.groups||[]).map(g=>({school_id:profile.school_id,external_id:String(g.id),name:String(g.name||'').trim(),subject:g.subject||null,teacher_name:g.teacher||null,schedule:g.schedule||null,monthly_fee:Number(g.fee)||0})).filter(g=>g.name);
-    if(localGroups.length){
-     const up=await sb.from('school_groups').upsert(localGroups,{onConflict:'school_id,external_id'});
-     if(up.error)throw up.error;
-    }
-    const localStudents=(payload.students||[]).map(s=>({school_id:profile.school_id,external_id:String(s.id),full_name:String(s.name||'').trim(),phone:s.phone||null,group_name:s.group||null,monthly_fee:Number(s.fee)||0,status:s.status||'Active'})).filter(s=>s.full_name);
-    if(localStudents.length){
-     const up=await sb.from('students').upsert(localStudents,{onConflict:'school_id,external_id'});
-     if(up.error)throw up.error;
+    if(['owner','admin'].includes(profile.role)){
+     const localGroups=(payload.groups||[]).map(g=>({school_id:profile.school_id,external_id:String(g.id),name:String(g.name||'').trim(),subject:g.subject||null,teacher_name:g.teacher||null,schedule:g.schedule||null,monthly_fee:Number(g.fee)||0})).filter(g=>g.name);
+     if(localGroups.length){const up=await sb.from('school_groups').upsert(localGroups,{onConflict:'school_id,external_id'});if(up.error)throw up.error;}
+     const localStudents=(payload.students||[]).map(s=>({school_id:profile.school_id,external_id:String(s.id),full_name:String(s.name||'').trim(),phone:s.phone||null,group_name:s.group||null,monthly_fee:Number(s.fee)||0,status:s.status||'Active'})).filter(s=>s.full_name);
+     if(localStudents.length){const up=await sb.from('students').upsert(localStudents,{onConflict:'school_id,external_id'});if(up.error)throw up.error;}
     }
     const stored=await sb.from('students').select('id,external_id,full_name').eq('school_id',profile.school_id);
     if(stored.error)throw stored.error;
