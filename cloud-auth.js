@@ -69,7 +69,18 @@
     window.schoolCloud.schoolSettings=saved.data;
     return saved.data;
    },
-   inviteParent:async payload=>{const student=await sb.from('students').select('id').eq('school_id',profile.school_id).eq('external_id',String(payload.student_id)).single();if(student.error)throw new Error('Could not find the selected student in the cloud. Save the student record first.');const {data,error}=await sb.functions.invoke('invite-parent',{body:{...payload,student_id:student.data.id}});if(error)throw error;if(data?.error)throw new Error(data.error);return data},
+   inviteParent:async payload=>{
+    const student=await sb.from('students').select('id').eq('school_id',profile.school_id).eq('external_id',String(payload.student_id)).single();
+    if(student.error)throw new Error('Tanlangan o‘quvchi bulutli bazada topilmadi. Avval o‘quvchini saqlang.');
+    const {data,error}=await sb.functions.invoke('invite-parent',{body:{...payload,student_id:student.data.id}});
+    if(error){
+     let detail='';
+     try{const body=await error.context?.clone?.().json();detail=body?.error||body?.message||''}catch{}
+     throw new Error(detail||error.message||'Taklif yuborishda xatolik yuz berdi.');
+    }
+    if(data?.error)throw new Error(data.error);
+    return data;
+   },
    deleteSchoolRecord:async(type,id)=>{
     const recordId=String(id);
     if(type==='payments'||type==='expenses'){
