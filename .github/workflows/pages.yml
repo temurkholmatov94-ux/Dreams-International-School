@@ -20,6 +20,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Run JavaScript syntax checks
+        run: |
+          node --check app.js
+          node --check cloud-auth.js
+          node --check uzbek.js
+      - name: Run release quality checks
+        run: node scripts/quality-check.cjs
       - name: Configure Pages
         uses: actions/configure-pages@v5
       - name: Upload Pages artifact
