@@ -70,6 +70,22 @@
     return saved.data;
    },
    inviteParent:async payload=>{const student=await sb.from('students').select('id').eq('school_id',profile.school_id).eq('external_id',String(payload.student_id)).single();if(student.error)throw new Error('Could not find the selected student in the cloud. Save the student record first.');const {data,error}=await sb.functions.invoke('invite-parent',{body:{...payload,student_id:student.data.id}});if(error)throw error;if(data?.error)throw new Error(data.error);return data},
+   deleteSchoolRecord:async(type,id)=>{
+    const recordId=String(id);
+    if(type==='payments'||type==='expenses'){
+     if(!['owner','admin','accountant'].includes(profile.role))throw new Error('Only finance staff can remove transactions.');
+     const prefix=type==='payments'?'payment:':'expense:';
+     const removed=await sb.from('finance_transactions').delete().eq('school_id',profile.school_id).eq('external_id',prefix+recordId);
+     if(removed.error)throw removed.error;
+     return;
+    }
+    if(!['owner','admin','teacher'].includes(profile.role))throw new Error('Your account cannot remove this school record.');
+    const targets={students:['students','external_id'],groups:['school_groups','external_id'],results:['student_results','external_id']};
+    const target=targets[type];
+    if(!target)return;
+    const removed=await sb.from(target[0]).delete().eq('school_id',profile.school_id).eq(target[1],recordId);
+    if(removed.error)throw removed.error;
+   },
    deleteFinanceTransaction:async(type,id)=>{
     if(!['owner','admin','accountant'].includes(profile.role))throw new Error('Only finance staff can remove transactions.');
     const prefix=type==='payments'?'payment:':type==='expenses'?'expense:':null;
