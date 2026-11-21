@@ -157,8 +157,12 @@
    save:async payload=>{
     if(!['owner','admin','teacher','accountant'].includes(profile.role))return;
     if(['owner','admin'].includes(profile.role)){
-     const cloud=await sb.from('school_data').upsert({school_id:profile.school_id,payload,updated_by:session.user.id,updated_at:new Date().toISOString()},{onConflict:'school_id'});
+     const updatedAt=new Date().toISOString();
+     const cloud=await sb.from('school_data').upsert({school_id:profile.school_id,payload,updated_by:session.user.id,updated_at:updatedAt},{onConflict:'school_id'});
      if(cloud.error)throw cloud.error;
+     const academicPayload={students:payload.students||[],groups:payload.groups||[],attendance:payload.attendance||[],lessons:payload.lessons||[],homework:payload.homework||[],assessments:payload.assessments||[],results:payload.results||[]};
+     const academic=await sb.from('school_academic_data').upsert({school_id:profile.school_id,payload:academicPayload,updated_by:session.user.id,updated_at:updatedAt},{onConflict:'school_id'});
+     if(academic.error)throw academic.error;
     }
     if(['owner','admin','accountant'].includes(profile.role)){
      const financeRows=[
