@@ -144,7 +144,7 @@ or exists(select 1 from public.parent_student_links l where l.student_id=attenda
 drop policy if exists attendance_staff_manage on public.attendance_records;
 create policy attendance_staff_manage on public.attendance_records for all to authenticated
 using (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=attendance_records.school_id and p.role in ('owner','admin','teacher')))
-with check (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=attendance_records.school_id and p.role in ('owner','admin','teacher')));
+with check (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=attendance_records.school_id and p.role in ('owner','admin')));
 drop policy if exists parent_links_parent_or_staff_read on public.parent_student_links;
 create policy parent_links_parent_or_staff_read on public.parent_student_links for select to authenticated
 using (parent_user_id=(select auth.uid()) or exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=parent_student_links.school_id and p.role in ('owner','admin','teacher')));
@@ -169,7 +169,9 @@ create table if not exists public.school_academic_data (
   updated_by uuid references auth.users(id)
 );
 alter table public.school_academic_data enable row level security;
+revoke all on public.school_academic_data from public, anon, authenticated;
 grant select, insert, update on public.school_academic_data to authenticated;
+revoke delete on public.school_data from anon, authenticated;
 drop policy if exists school_academic_read_staff on public.school_academic_data;
 create policy school_academic_read_staff on public.school_academic_data for select to authenticated
 using (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=school_academic_data.school_id and p.role in ('owner','admin','teacher')));
