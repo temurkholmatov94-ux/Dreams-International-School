@@ -62,6 +62,19 @@
     return saved.data;
    },
    inviteParent:async payload=>{const student=await sb.from('students').select('id').eq('school_id',profile.school_id).eq('external_id',String(payload.student_id)).single();if(student.error)throw new Error('Could not find the selected student in the cloud. Save the student record first.');const {data,error}=await sb.functions.invoke('invite-parent',{body:{...payload,student_id:student.data.id}});if(error)throw error;if(data?.error)throw new Error(data.error);return data},
+   saveExamAttempt:async payload=>{
+    if(!['owner','admin','teacher'].includes(profile.role))throw new Error('Your account cannot save exam attempts.');
+    const row={school_id:profile.school_id,user_id:session.user.id,title:String(payload.title||'Timed assessment').slice(0,180),cefr_level:payload.cefr_level,topic:String(payload.topic||'All').slice(0,100),question_count:Number(payload.question_count),score:Number(payload.score),answered_count:Number(payload.answered_count),duration_seconds:Number(payload.duration_seconds),answers:Array.isArray(payload.answers)?payload.answers:[]};
+    const saved=await sb.from('exam_attempts').insert(row).select('id,completed_at').single();
+    if(saved.error)throw saved.error;
+    return saved.data;
+   },
+   listExamAttempts:async()=>{
+    if(!['owner','admin','teacher'].includes(profile.role))return [];
+    const result=await sb.from('exam_attempts').select('id,title,cefr_level,topic,question_count,score,answered_count,duration_seconds,completed_at').eq('school_id',profile.school_id).order('completed_at',{ascending:false}).limit(30);
+    if(result.error)throw result.error;
+    return result.data||[];
+   },
    save:async payload=>{
     if(!['owner','admin'].includes(profile.role))return;
     const cloud=await sb.from('school_data').upsert({school_id:profile.school_id,payload,updated_by:session.user.id,updated_at:new Date().toISOString()},{onConflict:'school_id'});
