@@ -55,7 +55,7 @@
   const schoolResult=await sb.from('schools').select('id,name,slug,logo_url,contact_email,contact_phone,address,website,primary_color,plan,subscription_status').eq('id',profile.school_id).single();
   if(schoolResult.error)throw schoolResult.error;
   const schoolSettings=schoolResult.data;
-  const d=profile.role==='parent'?{data:null,error:null}:await sb.from('school_data').select('payload').eq('school_id',profile.school_id).maybeSingle();
+  const d=['parent','accountant'].includes(profile.role)?{data:null,error:null}:await sb.from('school_data').select('payload').eq('school_id',profile.school_id).maybeSingle();
   if(d.error){showGate('Could not load school data: '+d.error.message);return}
   window.schoolCloud={
    schoolId:profile.school_id,profile,canManage:['owner','admin'].includes(profile.role),
