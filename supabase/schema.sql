@@ -156,4 +156,4 @@ with check (exists(select 1 from public.school_profiles p where p.user_id=(selec
 -- Keep parent accounts out of the all-school JSON workspace.
 drop policy if exists school_data_read_school_members on public.school_data;
 create policy school_data_read_school_members on public.school_data for select to authenticated
-using (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=school_data.school_id and p.role in ('owner','admin','teacher','accountant')));
+using (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=school_data.school_id and p.role in ('owner','admin','teacher')));
