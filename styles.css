@@ -70,3 +70,18 @@
 .staff-form input,.staff-form select{width:100%;min-height:42px;padding:10px 12px;border:1px solid #e0e5ef;border-radius:8px;background:#fff;color:#26324a}
 .staff-form .primary-btn{min-height:42px}
 @media(max-width:640px){.staff-form{grid-template-columns:1fr}.staff-panel{padding:16px}}
+
+.finance-panel{margin:16px 0;padding:22px}
+.finance-bars{height:190px;display:flex;align-items:stretch;justify-content:space-around;gap:14px;padding:18px 10px 0;border-bottom:1px solid #e8edf4}
+.finance-month{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:8px;min-width:0}
+.finance-bar-pair{height:150px;width:100%;display:flex;align-items:flex-end;justify-content:center;gap:5px}
+.finance-bar-pair i,.finance-bar-pair b{display:block;width:min(24px,38%);min-height:2px;border-radius:5px 5px 0 0}
+.finance-bar-pair i{background:#4967e8}
+.finance-bar-pair b{background:#e6a04b}
+.finance-month small{font-size:11px;color:#7d899e}
+.finance-legend{display:flex;justify-content:center;gap:20px;margin-top:14px;color:#738098;font-size:11px}
+.finance-legend span{display:flex;align-items:center;gap:6px}
+.finance-legend i{width:9px;height:9px;border-radius:3px;background:#4967e8}
+.finance-legend span+span i{background:#e6a04b}
+.finance-payroll{font-size:26px;color:#26334d}
+@media(max-width:640px){.finance-panel{padding:16px}.finance-bars{gap:5px}.finance-bar-pair{gap:3px}}
