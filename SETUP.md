@@ -57,3 +57,12 @@ The repository includes a GitHub Actions workflow for Pages. In GitHub, open Set
 - The parent portal and charts must be tested with real test accounts before collecting children's real personal data.
 - Existing JSON workspace data is still retained for compatibility. Normalized student and attendance data is synchronized from the owner/admin workspace; do not manually edit database rows until the migration and data flow are validated.
 - Configure leaked-password protection in Supabase Auth before production use.
+
+### Before sending the first parent invitation
+1. In Supabase Dashboard, open **Authentication → URL Configuration**.
+2. Set **Site URL** to `https://temurkholmatov94-ux.github.io/Dreams-International-School/`.
+3. Add that same URL to **Redirect URLs**.
+4. Configure a custom SMTP provider under **Authentication → SMTP Settings** before inviting real families, so invitations are reliably delivered.
+5. In **Authentication → Security and Protection**, enable leaked-password protection.
+
+The parent invitation Edge Function is deployed as `invite-parent` with JWT verification enabled. It redirects invitation links to the published website.
