@@ -171,4 +171,5 @@ select d.school_id,
 from public.school_data d
 where exists (select 1 from public.school_profiles p
   where p.user_id = (select auth.uid()) and p.school_id = d.school_id and p.role = 'teacher');
+revoke all on public.school_academic_data from public, anon, authenticated;
 grant select on public.school_academic_data to authenticated;
