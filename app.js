@@ -125,12 +125,12 @@ const questionBank=[
 let generatedPaper=[];
 function testStudio(){
  const topics=[...new Set(questionBank.map(q=>q.topic))];
- return '<section class="panel test-studio"><div class="panel-header"><div><h3>Teaching Assistant</h3><p>Prepare classroom materials across CEFR levels A1–C2</p></div><span class="tag">Teacher workspace · Beta</span></div><div class="assistant-intro"><div class="assistant-orb">✦</div><div><strong>Your lesson preparation desk</strong><p>Build printable grammar tests, reading tasks, writing prompts and vocabulary practice.</p></div></div><form id="testBuilder" class="test-builder"><div class="field"><label>Material type</label><select name="material"><option value="exam">Timed exam simulator (multiple choice)</option><option value="grammar">Grammar & multiple choice</option><option value="reading">Reading comprehension</option><option value="writing">Writing practice</option><option value="vocabulary">Vocabulary practice</option></select></div><div class="field"><label>Topic</label><select name="topic"><option value="All">All topics</option>'+topics.map(t=>'<option>'+esc(t)+'</option>').join('')+'</select></div><div class="field"><label>CEFR level</label><select name="level"><option>A1</option><option>A2</option><option selected>B1</option><option>B2</option><option>C1</option><option>C2</option></select></div><div class="field"><label>Exam duration</label><select id="examDuration" name="duration"><option value="10">10 minutes</option><option value="20" selected>20 minutes</option><option value="30">30 minutes</option><option value="45">45 minutes</option></select></div><div class="field"><label>Number of questions / tasks</label><select name="count"><option>5</option><option selected>10</option><option>15</option><option>20</option></select></div><div class="field full"><label>Worksheet title</label><input name="title" value="English Practice Worksheet" required></div><button class="primary-btn" type="submit">✦ Create learning material</button></form><div id="testPreview" class="test-preview"><div class="empty-state"><strong>Your worksheet will appear here</strong><p>Select a material type and level to prepare a classroom resource.</p></div></div></section><section class="panel ai-roadmap"><h3>AI-powered generation — next connection</h3><p>Secure AI generation will be enabled through a server-side service. Your OpenAI API key will never be stored in this website or exposed to students and teachers.</p><span class="status pending">API connection required</span></section>';
+ return '<section class="panel test-studio"><div class="panel-header"><div><h3>Teaching Assistant</h3><p>Prepare classroom materials across CEFR levels A1–C2</p></div><span class="tag">Teacher workspace · Beta</span></div><div class="assistant-intro"><div class="assistant-orb">✦</div><div><strong>Your lesson preparation desk</strong><p>Build printable grammar tests, reading tasks, writing prompts and vocabulary practice.</p></div></div><form id="testBuilder" class="test-builder"><div class="field"><label>Material type</label><select name="material"><option value="exam">Timed exam simulator (multiple choice)</option><option value="grammar">Grammar & multiple choice</option><option value="reading">Reading comprehension</option><option value="writing">Writing practice</option><option value="vocabulary">Vocabulary practice</option></select></div><div class="field"><label>Topic</label><select name="topic"><option value="All">All topics</option>'+topics.map(t=>'<option>'+esc(t)+'</option>').join('')+'</select></div><div class="field"><label>CEFR level</label><select name="level"><option>A1</option><option>A2</option><option selected>B1</option><option>B2</option><option>C1</option><option>C2</option></select></div><div class="field"><label>Exam duration</label><select id="examDuration" name="duration"><option value="10">10 minutes</option><option value="20" selected>20 minutes</option><option value="30">30 minutes</option><option value="45">45 minutes</option></select></div><div class="field"><label>Number of questions / tasks</label><select name="count"><option>5</option><option selected>10</option><option>15</option><option>20</option></select></div><div class="field full"><label>Worksheet title</label><input name="title" value="English Practice Worksheet" required></div><button class="primary-btn" type="submit">✦ Create learning material</button></form><div id="testPreview" class="test-preview"><div class="empty-state"><strong>Your worksheet will appear here</strong><p>Select a material type and level to prepare a classroom resource.</p></div></div></section><section class="panel exam-history-panel"><div class="panel-header"><div><h3>Recent exam attempts</h3><p>Your centre’s latest timed assessment results</p></div><button class="secondary-btn" id="refreshExamHistory" type="button">Refresh</button></div><div id="examHistory"><p class="muted-note">Loading exam history…</p></div></section><section class="panel ai-roadmap"><h3>AI-powered generation — next connection</h3><p>Secure AI generation will be enabled through a server-side service. Your OpenAI API key will never be stored in this website or exposed to students and teachers.</p><span class="status pending">API connection required</span></section>';
 }
 function generateTest(e){
  e.preventDefault();const f=new FormData(e.currentTarget),topic=f.get('topic'),level=f.get('level'),count=Number(f.get('count')),material=f.get('material'),title=String(f.get('title')||'English Practice Worksheet');
  const preview=document.querySelector('#testPreview');
- if(material==='exam'){const pool=questionBank.filter(q=>(topic==='All'||q.topic===topic)&&q.level===level);if(!pool.length){notify('There are no objective questions for this level and topic yet.');return}startTimedExam(pool.slice().sort(()=>Math.random()-.5).slice(0,Math.min(count,pool.length)),title,level);return}
+ if(material==='exam'){const pool=questionBank.filter(q=>(topic==='All'||q.topic===topic)&&q.level===level);if(!pool.length){notify('There are no objective questions for this level and topic yet.');return}startTimedExam(pool.slice().sort(()=>Math.random()-.5).slice(0,Math.min(count,pool.length)),title,level,topic);return}
  if(material==='grammar'||material==='vocabulary'){
   let pool=questionBank.filter(q=>(topic==='All'||q.topic===topic)&&(q.level===level||material==='vocabulary'&&q.topic==='Vocabulary'&&q.level===level));
   if(!pool.length){notify('No reviewed questions match this selection yet. Try another level or topic.');return}
@@ -146,8 +146,21 @@ function generateTest(e){
  document.querySelector('#printTest').addEventListener('click',()=>printLearningMaterial(title));
 }
 
-function startTimedExam(questions,title,level){
- const preview=document.querySelector('#testPreview');let seconds=Number(document.querySelector('#examDuration')?.value||20)*60;let finished=false,timer=null;
+
+async function loadExamHistory(){
+ const host=document.querySelector('#examHistory');if(!host)return;
+ if(!window.schoolCloud?.listExamAttempts){host.innerHTML='<p class="muted-note">Sign in with a staff account to view saved exam attempts.</p>';return}
+ host.innerHTML='<p class="muted-note">Loading exam history…</p>';
+ try{
+  const rows=await window.schoolCloud.listExamAttempts();
+  if(!document.querySelector('#examHistory'))return;
+  if(!rows.length){host.innerHTML='<div class="empty-state"><strong>No saved attempts yet</strong><p>Complete a timed multiple-choice exam and its result will appear here.</p></div>';return}
+  host.innerHTML='<div class="table-wrap"><table><thead><tr><th>Assessment</th><th>Level</th><th>Score</th><th>Answered</th><th>Duration</th><th>Completed</th></tr></thead><tbody>'+rows.map(x=>'<tr><td><strong>'+esc(x.title)+'</strong><small class="history-topic">'+esc(x.topic)+'</small></td><td>'+esc(x.cefr_level)+'</td><td><strong>'+x.score+'/'+x.question_count+'</strong> · '+Math.round(x.score/x.question_count*100)+'%</td><td>'+x.answered_count+'/'+x.question_count+'</td><td>'+Math.floor(x.duration_seconds/60)+'m '+(x.duration_seconds%60)+'s</td><td>'+new Date(x.completed_at).toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})+'</td></tr>').join('')+'</tbody></table></div>';
+ }catch(err){host.innerHTML='<p class="muted-note">Could not load exam history: '+esc(err.message||'Unknown error')+'</p>'}
+}
+
+function startTimedExam(questions,title,level,topic='All'){
+ const preview=document.querySelector('#testPreview');let seconds=Number(document.querySelector('#examDuration')?.value||20)*60;const totalSeconds=seconds;let finished=false,timer=null;
  const clock=()=>String(Math.floor(seconds/60)).padStart(2,'0')+':'+String(seconds%60).padStart(2,'0');
  preview.innerHTML='<div class="exam-top"><div><span class="tag">Timed assessment</span><h3>'+esc(title)+'</h3><p>CEFR '+esc(level)+' · '+questions.length+' questions · One point each</p></div><div class="exam-clock" id="examClock" role="timer">'+clock()+'</div></div><form id="liveExamForm"><div class="exam-instructions">Choose one answer for each question. Your answers are checked when you submit or when the timer reaches zero.</div>'+questions.map((q,i)=>'<fieldset class="exam-question"><legend>'+(i+1)+'. '+esc(q.q)+'</legend>'+q.o.map((o,j)=>'<label class="exam-option"><input type="radio" name="q'+i+'" value="'+j+'"><span>'+String.fromCharCode(65+j)+'. '+esc(o)+'</span></label>').join('')+'</fieldset>').join('')+'<button class="primary-btn" type="submit">Submit examination</button></form>';
  const form=document.querySelector('#liveExamForm');
@@ -155,8 +168,16 @@ function startTimedExam(questions,title,level){
   if(finished)return;finished=true;if(timer)clearInterval(timer);
   const fd=new FormData(form);let score=0,answered=0;
   const review=questions.map((q,i)=>{const raw=fd.get('q'+i),chosen=raw===null?null:Number(raw),correct=chosen===q.a;if(chosen!==null)answered++;if(correct)score++;return '<div class="exam-review '+(correct?'correct':chosen===null?'unanswered':'incorrect')+'"><strong>'+(i+1)+'. '+esc(q.q)+'</strong><p>Your answer: '+(chosen===null?'Not answered':esc(q.o[chosen]))+'</p><p>Correct answer: <strong>'+String.fromCharCode(65+q.a)+'. '+esc(q.o[q.a])+'</strong></p></div>'}).join('');
-  preview.innerHTML='<section class="exam-result"><span class="tag">Assessment complete</span><h2>'+score+' / '+questions.length+'</h2><p>'+Math.round(score/questions.length*100)+'% · '+answered+' of '+questions.length+' answered</p><div class="exam-score-track"><span style="width:'+(score/questions.length*100)+'%"></span></div><h3>Answer review</h3>'+review+'<button class="primary-btn" id="printExamResult" type="button">Print results</button></section>';
+  preview.innerHTML='<section class="exam-result"><span class="tag">Assessment complete</span><h2>'+score+' / '+questions.length+'</h2><p>'+Math.round(score/questions.length*100)+'% · '+answered+' of '+questions.length+' answered</p><div class="exam-score-track"><span style="width:'+(score/questions.length*100)+'%"></span></div><h3>Answer review</h3>'+review+'<p id="examSaveStatus" class="muted-note">Saving result to your school history…</p><button class="primary-btn" id="printExamResult" type="button">Print results</button></section>';
   document.querySelector('#printExamResult').addEventListener('click',()=>printLearningMaterial(title+' — Results'));
+  if(window.schoolCloud?.saveExamAttempt){
+   const answers=questions.map((q,i)=>{const raw=fd.get('q'+i),chosen=raw===null?null:Number(raw);return {question:q.q,options:q.o,chosen,correct_answer:q.a,is_correct:chosen===q.a}});
+   window.schoolCloud.saveExamAttempt({title,cefr_level:level,topic,question_count:questions.length,score,answered_count:answered,duration_seconds:totalSeconds-seconds,answers})
+    .then(()=>{const status=document.querySelector('#examSaveStatus');if(status)status.textContent='Saved to your school exam history.';if(page==='teststudio')loadExamHistory()})
+    .catch(err=>{const status=document.querySelector('#examSaveStatus');if(status)status.textContent='Could not save to cloud: '+(err.message||'Please try again.')});
+  }else{
+   const status=document.querySelector('#examSaveStatus');if(status)status.textContent='Cloud sign-in is required to save exam history.';
+  }
  }
  form.addEventListener('submit',e=>{e.preventDefault();finish()});
  timer=setInterval(()=>{if(finished)return;seconds=Math.max(0,seconds-1);const el=document.querySelector('#examClock');if(el)el.textContent=clock();if(seconds===0)finish()},1000);
@@ -251,6 +272,7 @@ function render(){
  setText('#breadcrumbTitle',meta[0]||'Dashboard overview');
  setText('#studentNavCount',Array.isArray(db.students)?db.students.length:0);
  const content=document.querySelector('#pageContent');if(content)content.innerHTML=activeView();
+ if(page==='teststudio')loadExamHistory();
  document.querySelectorAll('.nav-item').forEach(b=>b.classList.toggle('active',b.dataset.page===page));
  const quick=document.querySelector('#quickAdd');
  if(quick){quick.hidden=page==='parents';const labels={dashboard:'Add student',students:'Add student',teachers:'Add teacher',groups:'Add group',attendance:'Take attendance',payments:'Record payment',expenses:'Add expense',reports:'Export report',parents:'Invite parent',teststudio:'Build test',performance:'View progress',settings:'Save settings',staff:'Invite staff',finance:'Generate invoices'};quick.innerHTML='＋ <span>'+(labels[page]||'Quick action')+'</span>'}
@@ -266,6 +288,7 @@ function render(){
  document.querySelector('#refreshStaff')?.addEventListener('click',loadStaff);
  document.querySelector('#generateBills')?.addEventListener('click',generateMonthlyBills);
  document.querySelector('#testBuilder')?.addEventListener('submit',generateTest);
+ document.querySelector('#refreshExamHistory')?.addEventListener('click',loadExamHistory);
  if(window.schoolApp)window.schoolApp.applyPermissions();
 }
 function go(p){page=p;render();document.querySelector('#sidebar').classList.remove('open')}
