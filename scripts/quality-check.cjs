@@ -26,7 +26,8 @@ assert.match(app, /allowedPages=admin\?null:teacher\?\[/, 'Teacher navigation mu
 assert.match(app, /accountant\?\['dashboard','payments','expenses','finance','reports'\]/, 'Accountant navigation must be finance-focused.');
 assert.match(cloud, /profile\.role==='teacher'\?'school_academic_data':'school_data'/, 'Teachers must load the academic-only workspace.');
 assert.match(cloud, /\['parent','accountant'\]\.includes\(profile\.role\)/, 'Parents and accountants must not load the full workspace JSON.');
-assert.match(cloud, /const academicPayload=\{students:payload\.students/, 'Academic data must be synchronised separately.');
+assert.match(cloud, /let academicPayload=\{students:payload\.students/, 'Academic data must be synchronised separately.');
+assert.match(cloud, /academicPayload=\{\.\.\.current,attendance:academicPayload\.attendance/, 'Teacher saves must preserve owner-managed master data.');
 assert.match(schema, /create table if not exists public\.school_academic_data/i, 'Academic workspace table must exist in the schema.');
 assert.match(schema, /school_academic_data for select to authenticated[\s\S]*?school_academic_data\.school_id and p\.role in \('owner','admin','teacher'\)/, 'Academic workspace reads must be school- and role-scoped.');
 assert.match(schema, /school_academic_data for insert to authenticated[\s\S]*?school_academic_data\.school_id and p\.role in \('owner','admin','teacher'\)/, 'Academic workspace inserts must be limited to school academic staff.');
