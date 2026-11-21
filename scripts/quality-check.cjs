@@ -28,8 +28,10 @@ assert.match(cloud, /profile\.role==='teacher'\?'school_academic_data':'school_d
 assert.match(cloud, /\['parent','accountant'\]\.includes\(profile\.role\)/, 'Parents and accountants must not load the full workspace JSON.');
 assert.match(cloud, /const academicPayload=\{students:payload\.students/, 'Academic data must be synchronised separately.');
 assert.match(schema, /create table if not exists public\.school_academic_data/i, 'Academic workspace table must exist in the schema.');
-assert.match(schema, /school_academic_data\.school_id and p\.role in \('owner','admin','teacher'\)/, 'Academic workspace reads must be school- and role-scoped.');
-assert.match(schema, /school_academic_data\.school_id and p\.role in \('owner','admin','teacher'\)/, 'Academic workspace writes must be restricted to school academic staff.');
+assert.match(schema, /school_academic_data for select to authenticated[\s\S]*?school_academic_data\.school_id and p\.role in \('owner','admin','teacher'\)/, 'Academic workspace reads must be school- and role-scoped.');
+assert.match(schema, /school_academic_data for insert to authenticated[\s\S]*?school_academic_data\.school_id and p\.role in \('owner','admin','teacher'\)/, 'Academic workspace inserts must be limited to school academic staff.');
+assert.match(schema, /school_academic_data for update to authenticated[\s\S]*?school_academic_data\.school_id and p\.role in \('owner','admin','teacher'\)/, 'Academic workspace updates must be limited to school academic staff.');
+assert.match(schema, /school_data for select to authenticated[\s\S]*?school_data\.school_id and p\.role in \('owner','admin'\)/, 'Full workspace reads must be restricted to owners and admins.');
 assert.match(cloud, /sb\.from\('student_homework'\)\.select/, 'Homework must be reloaded from cloud records.');
 assert.match(cloud, /sb\.from\('student_results'\)\.select/, 'Grades must be reloaded from cloud records.');
 assert.match(app, /if\(Array\.isArray\(shared\.homework\)\)db\.homework=shared\.homework/, 'Homework cloud records must hydrate the workspace.');
