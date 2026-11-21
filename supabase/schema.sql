@@ -136,7 +136,7 @@ or exists(select 1 from public.parent_student_links l where l.student_id=student
 drop policy if exists students_staff_manage on public.students;
 create policy students_staff_manage on public.students for all to authenticated
 using (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=students.school_id and p.role in ('owner','admin','teacher')))
-with check (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=students.school_id and p.role in ('owner','admin','teacher')));
+with check (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=students.school_id and p.role in ('owner','admin')));
 drop policy if exists attendance_school_or_parent_read on public.attendance_records;
 create policy attendance_school_or_parent_read on public.attendance_records for select to authenticated
 using (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=attendance_records.school_id and p.role in ('owner','admin','teacher','accountant'))
@@ -159,17 +159,24 @@ create policy school_data_read_school_members on public.school_data for select t
 using (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=school_data.school_id and p.role in ('owner','admin','teacher')));
 
 
--- Teachers receive only academic fields through a restricted view.
-create or replace view public.school_academic_data with (security_barrier = true) as
-select d.school_id,
-       jsonb_strip_nulls(jsonb_build_object(
-         'students', d.payload->'students', 'groups', d.payload->'groups',
-         'attendance', d.payload->'attendance', 'lessons', d.payload->'lessons',
-         'homework', d.payload->'homework', 'assessments', d.payload->'assessments',
-         'results', d.payload->'results'
-       )) as payload
-from public.school_data d
-where exists (select 1 from public.school_profiles p
-  where p.user_id = (select auth.uid()) and p.school_id = d.school_id and p.role = 'teacher');
-revoke all on public.school_academic_data from public, anon, authenticated;
-grant select on public.school_academic_data to authenticated;
+
+
+-- Separate academic workspace: teachers never receive finance or staff payloads.
+create table if not exists public.school_academic_data (
+  school_id uuid primary key references public.schools(id) on delete cascade,
+  payload jsonb not null default '{}'::jsonb,
+  updated_at timestamptz not null default now(),
+  updated_by uuid references auth.users(id)
+);
+alter table public.school_academic_data enable row level security;
+grant select, insert, update on public.school_academic_data to authenticated;
+drop policy if exists school_academic_read_staff on public.school_academic_data;
+create policy school_academic_read_staff on public.school_academic_data for select to authenticated
+using (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=school_academic_data.school_id and p.role in ('owner','admin','teacher')));
+drop policy if exists school_academic_write_admins on public.school_academic_data;
+create policy school_academic_write_admins on public.school_academic_data for insert to authenticated
+with check (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=school_academic_data.school_id and p.role in ('owner','admin')));
+drop policy if exists school_academic_update_admins on public.school_academic_data;
+create policy school_academic_update_admins on public.school_academic_data for update to authenticated
+using (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=school_academic_data.school_id and p.role in ('owner','admin')))
+with check (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=school_academic_data.school_id and p.role in ('owner','admin')));
