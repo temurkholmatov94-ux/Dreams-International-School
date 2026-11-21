@@ -405,6 +405,8 @@ window.schoolApp={showParentPortal, setData(data){if(!data||typeof data!=='objec
  if(Array.isArray(shared.students))db.students=shared.students;
  if(Array.isArray(shared.groups))db.groups=shared.groups;
  if(Array.isArray(shared.attendance))db.attendance=shared.attendance;
+ if(Array.isArray(shared.homework))db.homework=shared.homework;
+ if(Array.isArray(shared.results))db.results=shared.results;
  localStorage.setItem(STORE,JSON.stringify(db));render();
 },mergeFinanceData(records){if(!records)return;if(Array.isArray(records.payments))db.payments=records.payments;if(Array.isArray(records.expenses))db.expenses=records.expenses;localStorage.setItem(STORE,JSON.stringify(db));render()},applyPermissions(){
  const role=window.schoolCloud?.profile?.role;
