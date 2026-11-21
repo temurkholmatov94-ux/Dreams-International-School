@@ -44,3 +44,8 @@ document.querySelector('#mobileMenu').addEventListener('click',()=>document.quer
 document.querySelector('#todayDate').textContent=new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'});
 document.querySelector('#year').textContent=new Date().getFullYear();
 render();
+
+// Cloud bridge: preserve the demo fallback while syncing authenticated school data.
+window.schoolApp={setData(data){if(!data||typeof data!=='object')return;db={...structuredClone(initial),...data};localStorage.setItem(STORE,JSON.stringify(db));render()}};
+const localPersist=persist;
+persist=function(){localStorage.setItem(STORE,JSON.stringify(db));if(window.schoolCloud)window.schoolCloud.save(db);render()};
