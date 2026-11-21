@@ -38,6 +38,10 @@
   const channel=sb.channel('parent-attendance-'+profile.school_id).on('postgres_changes',{event:'*',schema:'public',table:'attendance_records',filter:'school_id=eq.'+profile.school_id},async()=>{try{await loadParent(profile)}catch(e){console.error('Attendance refresh failed',e)}}).subscribe();
   window.schoolCloud.realtimeChannel=channel;
  }
+ async function refreshSharedRecordsSafely(){
+  try{const shared=await window.schoolCloud?.refreshSharedRecords?.();if(shared)window.schoolApp?.mergeSharedData(shared)}
+  catch(e){console.error('Live school data refresh failed:',e)}
+ }
  async function start(){
   const sessionResult=await window.schoolSupabase.auth.getSession(),session=sessionResult.data.session;
   if(!session){showGate('Sign in to access your school or family portal.');return}
@@ -88,23 +92,60 @@
     return result.data||[];
    },
    save:async payload=>{
-    if(!['owner','admin'].includes(profile.role))return;
-    const cloud=await sb.from('school_data').upsert({school_id:profile.school_id,payload,updated_by:session.user.id,updated_at:new Date().toISOString()},{onConflict:'school_id'});
-    if(cloud.error){console.error('Cloud save failed:',cloud.error);return}
-    const localStudents=(payload.students||[]).map(s=>({school_id:profile.school_id,external_id:String(s.id),full_name:s.name,phone:s.phone||null,group_name:s.group||null,monthly_fee:Number(s.fee)||0,status:s.status||'Active'}));
+    if(!['owner','admin','teacher'].includes(profile.role))return;
+    if(['owner','admin'].includes(profile.role)){
+     const cloud=await sb.from('school_data').upsert({school_id:profile.school_id,payload,updated_by:session.user.id,updated_at:new Date().toISOString()},{onConflict:'school_id'});
+     if(cloud.error)throw cloud.error;
+    }
+    const localGroups=(payload.groups||[]).map(g=>({school_id:profile.school_id,external_id:String(g.id),name:String(g.name||'').trim(),subject:g.subject||null,teacher_name:g.teacher||null,schedule:g.schedule||null,monthly_fee:Number(g.fee)||0})).filter(g=>g.name);
+    if(localGroups.length){
+     const up=await sb.from('school_groups').upsert(localGroups,{onConflict:'school_id,external_id'});
+     if(up.error)throw up.error;
+    }
+    const localStudents=(payload.students||[]).map(s=>({school_id:profile.school_id,external_id:String(s.id),full_name:String(s.name||'').trim(),phone:s.phone||null,group_name:s.group||null,monthly_fee:Number(s.fee)||0,status:s.status||'Active'})).filter(s=>s.full_name);
     if(localStudents.length){
-     const up=await sb.from('students').upsert(localStudents,{onConflict:'school_id,external_id'});if(up.error){console.error('Student sync failed:',up.error);return}
+     const up=await sb.from('students').upsert(localStudents,{onConflict:'school_id,external_id'});
+     if(up.error)throw up.error;
     }
     const stored=await sb.from('students').select('id,external_id,full_name').eq('school_id',profile.school_id);
-    if(stored.error){console.error('Student lookup failed:',stored.error);return}
+    if(stored.error)throw stored.error;
     const idByExternal=new Map((stored.data||[]).map(s=>[String(s.external_id),s.id]));
-    const rows=(payload.attendance||[]).map(a=>{const external=String(a.studentId??(payload.students||[]).find(s=>s.name===a.student)?.id??'');const studentId=idByExternal.get(external);if(!studentId)return null;return {school_id:profile.school_id,student_id:studentId,attendance_date:a.date,status:a.status,marked_by:session.user.id}}).filter(Boolean);
-    if(rows.length){const saved=await sb.from('attendance_records').upsert(rows,{onConflict:'student_id,attendance_date'});if(saved.error)console.error('Attendance sync failed:',saved.error)}
-    const homeworkRows=(payload.homework||[]).map(x=>{const student= idByExternal.get(String((payload.students||[]).find(st=>st.name===x.student)?.id??''));return student?{school_id:profile.school_id,student_id:student,external_id:String(x.id),title:x.title,description:x.description||null,assigned_by:x.teacher||null,due_date:x.due_date||null}:null}).filter(Boolean);
-    if(homeworkRows.length){const saved=await sb.from('student_homework').upsert(homeworkRows,{onConflict:'school_id,external_id,student_id'});if(saved.error)console.error('Homework sync failed:',saved.error)}
-    const resultRows=(payload.results||[]).map(x=>{const student=idByExternal.get(String((payload.students||[]).find(st=>st.name===x.student)?.id??''));return student?{school_id:profile.school_id,student_id:student,external_id:String(x.id),assessment:x.assessment,score:Number(x.score)||0,max_score:Number(x.max_score)||100,assessment_date:x.date||null,feedback:x.feedback||null}:null}).filter(Boolean);
-    if(resultRows.length){const saved=await sb.from('student_results').upsert(resultRows,{onConflict:'school_id,external_id,student_id'});if(saved.error)console.error('Results sync failed:',saved.error)}
-   }
+    const idByName=new Map((stored.data||[]).map(s=>[s.full_name,s.id]));
+    const rows=(payload.attendance||[]).map(a=>{
+     const external=String(a.studentId??(payload.students||[]).find(s=>s.name===a.student)?.id??'');
+     const studentId=idByExternal.get(external)||idByName.get(a.student);
+     if(!studentId||!a.date||!['Present','Absent','Late','Excused'].includes(a.status))return null;
+     return {school_id:profile.school_id,student_id:studentId,attendance_date:a.date,status:a.status,marked_by:session.user.id};
+    }).filter(Boolean);
+    if(rows.length){
+     const saved=await sb.from('attendance_records').upsert(rows,{onConflict:'student_id,attendance_date'});
+     if(saved.error)throw saved.error;
+    }
+    const homeworkRows=(payload.homework||[]).map(x=>{
+     const student=idByName.get(x.student)||idByExternal.get(String(x.studentId||''));
+     return student?{school_id:profile.school_id,student_id:student,external_id:String(x.id),title:x.title,description:x.description||null,assigned_by:x.teacher||null,due_date:x.due_date||null}:null;
+    }).filter(Boolean);
+    if(homeworkRows.length){const saved=await sb.from('student_homework').upsert(homeworkRows,{onConflict:'school_id,external_id,student_id'});if(saved.error)throw saved.error}
+    const resultRows=(payload.results||[]).map(x=>{
+     const student=idByName.get(x.student)||idByExternal.get(String(x.studentId||''));
+     return student?{school_id:profile.school_id,student_id:student,external_id:String(x.id),assessment:x.assessment,score:Number(x.score)||0,max_score:Number(x.max_score)||100,assessment_date:x.date||null,feedback:x.feedback||null}:null;
+    }).filter(Boolean);
+    if(resultRows.length){const saved=await sb.from('student_results').upsert(resultRows,{onConflict:'school_id,external_id,student_id'});if(saved.error)throw saved.error}
+   },
+   refreshSharedRecords:async()=>{
+    if(!['owner','admin','teacher','accountant'].includes(profile.role))return;
+    const [students,groups,attendance]=await Promise.all([
+     sb.from('students').select('external_id,full_name,phone,group_name,monthly_fee,status').eq('school_id',profile.school_id).order('full_name'),
+     sb.from('school_groups').select('external_id,name,subject,teacher_name,schedule,monthly_fee').eq('school_id',profile.school_id).order('name'),
+     sb.from('attendance_records').select('student_id,attendance_date,status,note,students!inner(external_id,full_name)').eq('school_id',profile.school_id).order('attendance_date',{ascending:false}).limit(5000)
+    ]);
+    for(const r of [students,groups,attendance])if(r.error)throw r.error;
+    return {
+     students:(students.data||[]).map(s=>({id:s.external_id,name:s.full_name,phone:s.phone||'',group:s.group_name||'',fee:Number(s.monthly_fee)||0,status:s.status||'Active'})),
+     groups:(groups.data||[]).map(g=>({id:g.external_id,name:g.name,subject:g.subject||'',teacher:g.teacher_name||'',schedule:g.schedule||'',fee:Number(g.monthly_fee)||0})),
+     attendance:(attendance.data||[]).map(r=>({student:r.students?.full_name||'',studentId:r.students?.external_id||null,date:r.attendance_date,status:r.status}))
+    };
+   },
   };
   if(profile.role!=='parent'&&d.data?.payload){
    const payload=d.data.payload;
@@ -115,6 +156,15 @@
   const screen=document.getElementById('authScreen');if(screen)screen.remove();profileUi(profile);
   if(profile.role==='parent'){await loadParent(profile);return}
   if(d.data?.payload&&Object.keys(d.data.payload).length&&window.schoolApp)window.schoolApp.setData(d.data.payload);
+  if(profile.role!=='parent'&&window.schoolCloud.refreshSharedRecords){
+   try{const shared=await window.schoolCloud.refreshSharedRecords();window.schoolApp?.mergeSharedData(shared)}catch(e){console.error('Shared records refresh failed:',e)}
+   if(window.schoolCloud.realtimeChannel)await sb.removeChannel(window.schoolCloud.realtimeChannel);
+   window.schoolCloud.realtimeChannel=sb.channel('school-live-'+profile.school_id)
+    .on('postgres_changes',{event:'*',schema:'public',table:'students',filter:'school_id=eq.'+profile.school_id},refreshSharedRecordsSafely)
+    .on('postgres_changes',{event:'*',schema:'public',table:'school_groups',filter:'school_id=eq.'+profile.school_id},refreshSharedRecordsSafely)
+    .on('postgres_changes',{event:'*',schema:'public',table:'attendance_records',filter:'school_id=eq.'+profile.school_id},refreshSharedRecordsSafely)
+    .subscribe();
+  }
   if(profile.role==='owner'||profile.role==='admin'){
    const nav=document.querySelector('.nav');if(nav&&!nav.querySelector('[data-page="parents"]')){const b=document.createElement('button');b.className='nav-item';b.dataset.page='parents';b.innerHTML='<span>♧</span>Parent access';const attendance=nav.querySelector('[data-page="attendance"]');attendance?.after(b)}
   }else{document.querySelector('[data-page="parents"]')?.remove()}
