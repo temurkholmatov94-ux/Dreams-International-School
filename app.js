@@ -199,7 +199,7 @@ function saveAttendance(){document.querySelectorAll('.attendance-choice').forEac
 function csvExport(type){let arr=db[type]||[];if(!arr.length){notify('No records to export');return}let keys=Object.keys(arr[0]),csv=[keys.join(','),...arr.map(o=>keys.map(k=>'"'+String(o[k]??'').replace(/"/g,'""')+'"').join(','))].join('\n');download(csv,type+'-export.csv','text/csv')}
 function backup(){download(JSON.stringify(db,null,2),'dreams-school-backup.json','application/json');notify('Backup downloaded')}
 function download(content,name,mime){let a=document.createElement('a'),url=URL.createObjectURL(new Blob([content],{type:mime}));a.href=url;a.download=name;a.click();URL.revokeObjectURL(url)}
-document.querySelector('#quickAdd').addEventListener('click',()=>openModal(({dashboard:'students',students:'students',teachers:'teachers',groups:'groups',attendance:'attendance',payments:'payments',expenses:'expenses',reports:'reports'})[page]));
+document.querySelector('#quickAdd').addEventListener('click',()=>{const target=({dashboard:'students',students:'students',teachers:'teachers',groups:'groups',attendance:'attendance',payments:'payments',expenses:'expenses'})[page];if(target)openModal(target);else notify('Use the actions inside this section to continue.');});
 document.querySelector('#closeModal').addEventListener('click',()=>document.querySelector('#recordDialog').close());
 document.querySelector('#cancelModal').addEventListener('click',()=>document.querySelector('#recordDialog').close());
 
