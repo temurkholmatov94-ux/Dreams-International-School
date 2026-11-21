@@ -763,3 +763,22 @@ a,.text-link{color:#790d27!important}
  .command-hero{background:linear-gradient(145deg,#3b0818,#790d27)!important}
  .metric-ribbon{background:linear-gradient(145deg,#4b091d,#790d27)!important}
 }
+
+
+/* Dashboard page title banner: crimson only on the dashboard */
+body:has(.command-hero) .page-heading{
+ background:linear-gradient(112deg,#3b0818 0%,#650b24 58%,#8f1739 100%)!important;
+ border:1px solid #7c1834!important;
+ box-shadow:0 14px 34px #650b241c!important;
+}
+body:has(.command-hero) .page-heading h1,
+body:has(.command-hero) .page-heading p,
+body:has(.command-hero) .page-heading .eyebrow{color:#fff!important}
+body:has(.command-hero) .page-heading .eyebrow{opacity:.82}
+body:has(.command-hero) .page-heading:before{
+ border-color:#ffffff45!important;
+ box-shadow:0 0 0 32px #ffffff0c,0 0 0 68px #ffffff08,0 0 0 108px #ffffff05!important;
+}
+body:has(.command-hero) .page-heading .primary-btn{
+ background:#fff!important;color:#650b24!important;box-shadow:0 7px 18px #24000b33!important;
+}
