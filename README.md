@@ -44,3 +44,9 @@ This repository is an early-stage school-management SaaS prototype. It is not ye
 
 ### Development rule
 Do not use real children's personal data in preview mode. Use test accounts and synthetic records until production security and privacy checks have been completed.
+
+### Reliability work completed in the current development pass
+- Cloud saves are serialized in the browser client to reduce out-of-order snapshot writes.
+- Cloud deletion now handles normalized student, group and result rows, plus workspace-backed teacher, lesson, homework and assessment records.
+- Accountant sync is restricted to finance data; academic workspace writes are not attempted for accountant accounts.
+- Finance removal is implemented as cancellation in the cloud ledger so the transaction history is retained; cancelled rows are omitted from the active finance view.
