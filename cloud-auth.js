@@ -32,6 +32,7 @@
   ]);
   if(students.error)throw students.error;if(attendance.error)throw attendance.error;
   window.schoolApp.showParentPortal(students.data||[],attendance.data||[],profile);
+  if(window.schoolCloud.realtimeChannel)await sb.removeChannel(window.schoolCloud.realtimeChannel);
   const channel=sb.channel('parent-attendance-'+profile.school_id).on('postgres_changes',{event:'*',schema:'public',table:'attendance_records',filter:'school_id=eq.'+profile.school_id},async()=>{try{await loadParent(profile)}catch(e){console.error('Attendance refresh failed',e)}}).subscribe();
   window.schoolCloud.realtimeChannel=channel;
  }
@@ -65,6 +66,7 @@
    const payload=d.data.payload;
    const rows=(payload.students||[]).map(s=>({school_id:profile.school_id,external_id:String(s.id),full_name:s.name,phone:s.phone||null,group_name:s.group||null,monthly_fee:Number(s.fee)||0,status:s.status||'Active'}));
    if(rows.length){const synced=await sb.from('students').upsert(rows,{onConflict:'school_id,external_id'});if(synced.error)console.error('Initial student sync failed:',synced.error)}
+   await window.schoolCloud.save(payload);
   }
   const screen=document.getElementById('authScreen');if(screen)screen.remove();profileUi(profile);
   if(profile.role==='parent'){await loadParent(profile);return}
