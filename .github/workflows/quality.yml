@@ -1,0 +1,28 @@
+name: Pull request quality checks
+
+on:
+  pull_request:
+    branches: ['main-/-(root)']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check JavaScript syntax
+        run: |
+          node --check app.js
+          node --check cloud-auth.js
+          node --check uzbek.js
+          node --check scripts/quality-check.cjs
+      - name: Run quality and security checks
+        run: node scripts/quality-check.cjs
