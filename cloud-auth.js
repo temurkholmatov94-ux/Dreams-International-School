@@ -75,7 +75,7 @@
     if(type==='payments'||type==='expenses'){
      if(!['owner','admin','accountant'].includes(profile.role))throw new Error('Only finance staff can remove transactions.');
      const prefix=type==='payments'?'payment:':'expense:';
-     const removed=await sb.from('finance_transactions').delete().eq('school_id',profile.school_id).eq('external_id',prefix+recordId);
+     const removed=await sb.from('finance_transactions').update({status:'Cancelled'}).eq('school_id',profile.school_id).eq('external_id',prefix+recordId);
      if(removed.error)throw removed.error;
      return;
     }
@@ -104,14 +104,14 @@
     if(!['owner','admin','accountant'].includes(profile.role))throw new Error('Only finance staff can remove transactions.');
     const prefix=type==='payments'?'payment:':type==='expenses'?'expense:':null;
     if(!prefix)throw new Error('Unsupported finance record type.');
-    const removed=await sb.from('finance_transactions').delete().eq('school_id',profile.school_id).eq('external_id',prefix+String(id));
+    const removed=await sb.from('finance_transactions').update({status:'Cancelled'}).eq('school_id',profile.school_id).eq('external_id',prefix+String(id));
     if(removed.error)throw removed.error;
    },
    getFinanceTransactions:async()=>{
     if(!['owner','admin','accountant'].includes(profile.role))throw new Error('Finance access is restricted to authorised finance staff.');
     const result=await sb.from('finance_transactions').select('external_id,transaction_type,student_name,group_name,title,category,amount,transaction_date,payment_method,status,billing_period').eq('school_id',profile.school_id).order('transaction_date',{ascending:false}).limit(5000);
     if(result.error)throw result.error;
-    const rows=result.data||[];
+    const rows=(result.data||[]).filter(x=>x.status!=='Cancelled');
     return {
      payments:rows.filter(x=>x.transaction_type==='tuition').map(x=>({id:Number(x.external_id.replace(/^payment:/,''))||x.external_id,student:x.student_name||'',group:x.group_name||'',amount:Number(x.amount)||0,date:x.transaction_date,method:x.payment_method||'Pending',status:x.status,billing_period:x.billing_period||undefined})),
      expenses:rows.filter(x=>x.transaction_type==='expense').map(x=>({id:Number(x.external_id.replace(/^expense:/,''))||x.external_id,title:x.title||'Expense',category:x.category||'Other',amount:Number(x.amount)||0,date:x.transaction_date}))
