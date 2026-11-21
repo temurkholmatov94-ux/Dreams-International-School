@@ -44,4 +44,9 @@ assert.match(schema, /drop policy if exists students_staff_manage/i, 'Legacy bro
 assert.match(schema, /drop policy if exists groups_staff_manage/i, 'Legacy broad group policies must be removed.');
 assert.match(schema, /revoke all privileges on table public\.students, public\.school_groups, public\.attendance_records, public\.student_homework, public\.student_results, public\.parent_student_links from public, anon/i, 'Anonymous access to school records must be revoked.');
 assert.match(schema, /revoke truncate, references, trigger on table public\.students/i, 'Authenticated users must not receive structural table privileges.');
+
+assert.match(app, /const canAdd=type=>admin\|\|\(teacher&&\['results','homework'\]\.includes\(type\)\)/, 'Teachers must not create or edit student/group master data.');
+assert.match(app, /const canRemove=type=>admin\|\|\(accountant&&\['payments','expenses'\]\.includes\(type\)\)/, 'Teacher record deletion controls must remain disabled.');
+assert.match(cloud, /if\(profile\.role==='teacher'\)\{[\s\S]*?academicPayload=\{\.\.\.current,attendance:academicPayload\.attendance/, 'Teacher saves must preserve owner-managed student and group workspace data.');
+assert.match(cloud, /if\(\['owner','admin'\]\.includes\(profile\.role\)\)\{[\s\S]*?const localGroups=/, 'Only owners and admins may sync student/group master data.');
 console.log('Static quality and role-security checks passed.');
