@@ -198,7 +198,7 @@
   if(profile.role==='owner'||profile.role==='admin'){
    const nav=document.querySelector('.nav');if(nav&&!nav.querySelector('[data-page="parents"]')){const b=document.createElement('button');b.className='nav-item';b.dataset.page='parents';b.innerHTML='<span>♧</span>Parent access';const attendance=nav.querySelector('[data-page="attendance"]');attendance?.after(b)}
   }else{document.querySelector('[data-page="parents"]')?.remove()}
-  if(!window.schoolCloud.canManage){const note=document.createElement('div');note.className='readonly-note';note.textContent='Read-only access: your account can view school records.';const content=document.querySelector('.content');if(content)content.insertBefore(note,content.children[1]||null)}
+  if(!window.schoolCloud.canManage&&profile.role!=='accountant'){const note=document.createElement('div');note.className='readonly-note';note.textContent='Read-only access: your account can view school records.';const content=document.querySelector('.content');if(content)content.insertBefore(note,content.children[1]||null)}else if(profile.role==='accountant'){const note=document.createElement('div');note.className='readonly-note';note.textContent='Finance access: you can manage payments and expenses. Other school records are read-only.';const content=document.querySelector('.content');if(content)content.insertBefore(note,content.children[1]||null)}
   if(window.schoolApp)window.schoolApp.applyPermissions();
  }
  window.addEventListener('DOMContentLoaded',async()=>{
