@@ -128,7 +128,7 @@ using (exists(select 1 from public.school_profiles p where p.user_id=(select aut
 drop policy if exists groups_staff_manage on public.school_groups;
 create policy groups_staff_manage on public.school_groups for all to authenticated
 using (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=school_groups.school_id and p.role in ('owner','admin','teacher')))
-with check (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=school_groups.school_id and p.role in ('owner','admin','teacher')));
+with check (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=school_groups.school_id and p.role in ('owner','admin')));
 drop policy if exists students_school_or_parent_read on public.students;
 create policy students_school_or_parent_read on public.students for select to authenticated
 using (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=students.school_id and p.role in ('owner','admin','teacher','accountant'))
@@ -157,3 +157,18 @@ with check (exists(select 1 from public.school_profiles p where p.user_id=(selec
 drop policy if exists school_data_read_school_members on public.school_data;
 create policy school_data_read_school_members on public.school_data for select to authenticated
 using (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=school_data.school_id and p.role in ('owner','admin','teacher')));
+
+
+-- Teachers receive only academic fields through a restricted view.
+create or replace view public.school_academic_data with (security_barrier = true) as
+select d.school_id,
+       jsonb_strip_nulls(jsonb_build_object(
+         'students', d.payload->'students', 'groups', d.payload->'groups',
+         'attendance', d.payload->'attendance', 'lessons', d.payload->'lessons',
+         'homework', d.payload->'homework', 'assessments', d.payload->'assessments',
+         'results', d.payload->'results'
+       )) as payload
+from public.school_data d
+where exists (select 1 from public.school_profiles p
+  where p.user_id = (select auth.uid()) and p.school_id = d.school_id and p.role = 'teacher');
+grant select on public.school_academic_data to authenticated;
