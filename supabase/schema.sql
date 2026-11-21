@@ -189,3 +189,24 @@ drop policy if exists school_academic_update_admins on public.school_academic_da
 create policy school_academic_update_staff on public.school_academic_data for update to authenticated
 using (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=school_academic_data.school_id and p.role in ('owner','admin','teacher')))
 with check (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=school_academic_data.school_id and p.role in ('owner','admin','teacher')));
+
+-- Restrict student and group master-data changes to school owners/admins.
+drop policy if exists students_staff_insert on public.students;
+drop policy if exists students_staff_update on public.students;
+drop policy if exists students_staff_delete on public.students;
+create policy students_admin_insert on public.students for insert to authenticated with check (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=students.school_id and p.role in ('owner','admin')));
+create policy students_admin_update on public.students for update to authenticated using (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=students.school_id and p.role in ('owner','admin'))) with check (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=students.school_id and p.role in ('owner','admin')));
+create policy students_admin_delete on public.students for delete to authenticated using (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=students.school_id and p.role in ('owner','admin')));
+drop policy if exists groups_staff_insert on public.school_groups;
+drop policy if exists groups_staff_update on public.school_groups;
+drop policy if exists groups_staff_delete on public.school_groups;
+create policy groups_admin_insert on public.school_groups for insert to authenticated with check (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=school_groups.school_id and p.role in ('owner','admin')));
+create policy groups_admin_update on public.school_groups for update to authenticated using (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=school_groups.school_id and p.role in ('owner','admin'))) with check (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=school_groups.school_id and p.role in ('owner','admin')));
+create policy groups_admin_delete on public.school_groups for delete to authenticated using (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=school_groups.school_id and p.role in ('owner','admin')));
+-- Preserve academic staff create/update access, but prevent hard deletion of records.
+drop policy if exists homework_staff_delete on public.student_homework;
+create policy homework_admin_delete on public.student_homework for delete to authenticated using (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=student_homework.school_id and p.role in ('owner','admin')));
+drop policy if exists results_staff_delete on public.student_results;
+create policy results_admin_delete on public.student_results for delete to authenticated using (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=student_results.school_id and p.role in ('owner','admin')));
+drop policy if exists attendance_staff_delete on public.attendance_records;
+create policy attendance_admin_delete on public.attendance_records for delete to authenticated using (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=attendance_records.school_id and p.role in ('owner','admin')));
