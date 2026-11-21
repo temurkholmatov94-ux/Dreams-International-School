@@ -165,7 +165,7 @@
     const [students,groups,attendance]=await Promise.all([
      sb.from('students').select('external_id,full_name,phone,group_name,monthly_fee,status').eq('school_id',profile.school_id).order('full_name'),
      sb.from('school_groups').select('external_id,name,subject,teacher_name,schedule,monthly_fee').eq('school_id',profile.school_id).order('name'),
-     sb.from('attendance_records').select('student_id,attendance_date,status,note,students!inner(external_id,full_name)').eq('school_id',profile.school_id).order('attendance_date',{ascending:false}).limit(5000)
+     sb.from('attendance_records').select('student_id,attendance_date,status,note,students!attendance_records_student_school_fk!inner(external_id,full_name)').eq('school_id',profile.school_id).order('attendance_date',{ascending:false}).limit(5000)
     ]);
     for(const r of [students,groups,attendance])if(r.error)throw r.error;
     return {
@@ -185,7 +185,7 @@
   if(profile.role==='parent'){await loadParent(profile);return}
   if(d.data?.payload&&Object.keys(d.data.payload).length&&window.schoolApp)window.schoolApp.setData(d.data.payload);
   if(profile.role!=='parent'&&window.schoolCloud.refreshSharedRecords){
-   try{const shared=await window.schoolCloud.refreshSharedRecords();window.schoolApp?.mergeSharedData(shared)}catch(e){console.error('Shared records refresh failed:',e)}
+   try{const shared=await window.schoolCloud.refreshSharedRecords();window.schoolApp?.mergeSharedData(shared)}catch(e){console.error('Shared records refresh failed:',e?.message||e,e)}
    if(['owner','admin','accountant'].includes(profile.role)){try{const finance=await window.schoolCloud.getFinanceTransactions();window.schoolApp?.mergeFinanceData(finance)}catch(e){console.error('Finance records refresh failed:',e)}}
    if(window.schoolCloud.realtimeChannel)await sb.removeChannel(window.schoolCloud.realtimeChannel);
    window.schoolCloud.realtimeChannel=sb.channel('school-live-'+profile.school_id)
