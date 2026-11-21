@@ -177,7 +177,33 @@ function parents(){
 }
 
 const views={dashboard,students,teachers,groups,attendance,classroom,results,performance,finance,settings,staff,teststudio:testStudio,payments,expenses,reports,parents};
-function render(){if(!Object.prototype.hasOwnProperty.call(names,page)||!Object.prototype.hasOwnProperty.call(views,page))page='dashboard';const meta=names[page]||names.dashboard;const activeView=views[page]||dashboard;document.querySelector('#pageTitle').textContent=meta[0];document.querySelector('#pageSubtitle').textContent=meta[1];document.querySelector('#breadcrumbTitle').textContent=meta[0];document.querySelector('#studentNavCount').textContent=db.students.length;document.querySelector('#pageContent').innerHTML=activeView();document.querySelectorAll('.nav-item').forEach(b=>b.classList.toggle('active',b.dataset.page===page));document.querySelector('#quickAdd').hidden=page==='parents';document.querySelector('#quickAdd').innerHTML='＋ <span>'+({dashboard:'Add student',students:'Add student',teachers:'Add teacher',groups:'Add group',attendance:'Take attendance',payments:'Record payment',expenses:'Add expense',reports:'Export report',parents:'Invite parent',teststudio:'Build test',performance:'View progress',settings:'Save settings',staff:'Invite staff',finance:'Generate invoices'}[page])+'</span>';document.querySelectorAll('[data-modal]').forEach(b=>b.addEventListener('click',()=>openModal(b.dataset.modal)));document.querySelectorAll('[data-delete]').forEach(b=>b.addEventListener('click',()=>removeRecord(b.dataset.delete,Number(b.dataset.id))));const search=document.querySelector('#tableSearch');if(search)search.addEventListener('input',()=>document.querySelectorAll('tbody tr').forEach(r=>r.hidden=!r.textContent.toLowerCase().includes(search.value.toLowerCase())));document.querySelector('#downloadCsv')?.addEventListener('click',()=>csvExport(page));document.querySelector('#saveAttendance')?.addEventListener('click',saveAttendance);document.querySelector('#backupData')?.addEventListener('click',backup);document.querySelector('#parentInviteForm')?.addEventListener('submit',inviteParent);document.querySelector('#schoolSettingsForm')?.addEventListener('submit',saveSchoolSettings);document.querySelector('#staffInviteForm')?.addEventListener('submit',inviteStaff);document.querySelector('#refreshStaff')?.addEventListener('click',loadStaff);document.querySelector('#generateBills')?.addEventListener('click',generateMonthlyBills);document.querySelector('#testBuilder')?.addEventListener('submit',generateTest);if(window.schoolApp)window.schoolApp.applyPermissions()}
+function render(){
+ if(!Object.prototype.hasOwnProperty.call(names,page)||!Object.prototype.hasOwnProperty.call(views,page))page='dashboard';
+ const meta=Array.isArray(names[page])?names[page]:names.dashboard;
+ const activeView=typeof views[page]==='function'?views[page]:dashboard;
+ const setText=(selector,value)=>{const el=document.querySelector(selector);if(el)el.textContent=value};
+ setText('#pageTitle',meta[0]||'Dashboard overview');
+ setText('#pageSubtitle',meta[1]||'Workspace overview');
+ setText('#breadcrumbTitle',meta[0]||'Dashboard overview');
+ setText('#studentNavCount',Array.isArray(db.students)?db.students.length:0);
+ const content=document.querySelector('#pageContent');if(content)content.innerHTML=activeView();
+ document.querySelectorAll('.nav-item').forEach(b=>b.classList.toggle('active',b.dataset.page===page));
+ const quick=document.querySelector('#quickAdd');
+ if(quick){quick.hidden=page==='parents';const labels={dashboard:'Add student',students:'Add student',teachers:'Add teacher',groups:'Add group',attendance:'Take attendance',payments:'Record payment',expenses:'Add expense',reports:'Export report',parents:'Invite parent',teststudio:'Build test',performance:'View progress',settings:'Save settings',staff:'Invite staff',finance:'Generate invoices'};quick.innerHTML='＋ <span>'+(labels[page]||'Quick action')+'</span>'}
+ document.querySelectorAll('[data-modal]').forEach(b=>b.addEventListener('click',()=>openModal(b.dataset.modal)));
+ document.querySelectorAll('[data-delete]').forEach(b=>b.addEventListener('click',()=>removeRecord(b.dataset.delete,Number(b.dataset.id))));
+ const search=document.querySelector('#tableSearch');if(search)search.addEventListener('input',()=>document.querySelectorAll('tbody tr').forEach(r=>r.hidden=!r.textContent.toLowerCase().includes(search.value.toLowerCase())));
+ document.querySelector('#downloadCsv')?.addEventListener('click',()=>csvExport(page));
+ document.querySelector('#saveAttendance')?.addEventListener('click',saveAttendance);
+ document.querySelector('#backupData')?.addEventListener('click',backup);
+ document.querySelector('#parentInviteForm')?.addEventListener('submit',inviteParent);
+ document.querySelector('#schoolSettingsForm')?.addEventListener('submit',saveSchoolSettings);
+ document.querySelector('#staffInviteForm')?.addEventListener('submit',inviteStaff);
+ document.querySelector('#refreshStaff')?.addEventListener('click',loadStaff);
+ document.querySelector('#generateBills')?.addEventListener('click',generateMonthlyBills);
+ document.querySelector('#testBuilder')?.addEventListener('submit',generateTest);
+ if(window.schoolApp)window.schoolApp.applyPermissions();
+}
 function go(p){page=p;render();document.querySelector('#sidebar').classList.remove('open')}
 // Robust delegated navigation: keeps sidebar links working after every render.
 document.addEventListener('click',e=>{const nav=e.target.closest('.nav-item[data-page], [data-page]:not(.nav-item)');if(!nav)return;e.preventDefault();go(nav.dataset.page)},{capture:true});
