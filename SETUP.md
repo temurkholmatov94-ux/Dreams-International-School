@@ -43,3 +43,17 @@ The repository includes a GitHub Actions workflow for Pages. In GitHub, open Set
 - Student/teacher/group/payment/expense data is currently stored as one JSON payload. This is an initial shared-data bridge, not yet a fully normalised production database.
 - The dashboard still contains demonstration records. Replace these with verified school records after signing in.
 - Before storing children's personal information, complete role-specific access controls, audit history, validation, backups, and privacy/retention procedures.
+
+## Analytics and family portal update
+- Dashboard now includes student-by-group donut chart, daily attendance donut chart, and six-month income/expense bar chart.
+- A Parent access page lets an owner/admin invite a parent by email and link the account to a student.
+- Parent invitations are sent by the secured `invite-parent` Supabase Edge Function. It requires a signed-in owner/admin and validates that the student belongs to that school.
+- Parent accounts can view only linked students and their attendance history. Attendance changes are refreshed through Supabase Realtime.
+- Normalized tables now include `schools`, `school_groups`, `students`, `attendance_records`, and `parent_student_links`, all with Row Level Security.
+
+## Important launch limitations
+- The current website remains a first-school deployment. A self-service onboarding flow for new centres, automated subscription billing, payment-provider webhooks, custom domains, and platform-owner administration are not implemented yet.
+- Parent invitations require a valid parent email address and the centre's email delivery settings to be configured in Supabase Auth.
+- The parent portal and charts must be tested with real test accounts before collecting children's real personal data.
+- Existing JSON workspace data is still retained for compatibility. Normalized student and attendance data is synchronized from the owner/admin workspace; do not manually edit database rows until the migration and data flow are validated.
+- Configure leaked-password protection in Supabase Auth before production use.
