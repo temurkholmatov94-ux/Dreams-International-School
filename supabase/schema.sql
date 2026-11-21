@@ -22,6 +22,7 @@ create index if not exists school_data_updated_by_idx on public.school_data(upda
 alter table public.school_profiles enable row level security;
 alter table public.school_data enable row level security;
 grant select on public.school_profiles to authenticated;
+revoke all on public.school_data from public, anon, authenticated;
 grant select, insert, update on public.school_data to authenticated;
 
 drop policy if exists school_profiles_read_own on public.school_profiles;
