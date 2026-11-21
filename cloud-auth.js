@@ -42,10 +42,23 @@
   const p=await window.schoolSupabase.from('school_profiles').select('school_id,full_name,role').eq('user_id',session.user.id).single();
   if(p.error||!p.data){await window.schoolSupabase.auth.signOut();showGate('Your account has no school profile. Ask the school owner to set up your access.');return}
   const profile=p.data,sb=window.schoolSupabase;
+  const schoolResult=await sb.from('schools').select('id,name,slug,logo_url,contact_email,contact_phone,address,website,primary_color,plan,subscription_status').eq('id',profile.school_id).single();
+  if(schoolResult.error)throw schoolResult.error;
+  const schoolSettings=schoolResult.data;
   const d=profile.role==='parent'?{data:null,error:null}:await sb.from('school_data').select('payload').eq('school_id',profile.school_id).maybeSingle();
   if(d.error){showGate('Could not load school data: '+d.error.message);return}
   window.schoolCloud={
    schoolId:profile.school_id,profile,canManage:['owner','admin'].includes(profile.role),
+   schoolSettings,
+   updateSchoolSettings:async values=>{
+    if(!['owner','admin'].includes(profile.role))throw new Error('Only centre owners and administrators can change settings.');
+    const allowed={name:String(values.name||'').trim(),slug:String(values.slug||'').trim().toLowerCase(),logo_url:values.logo_url||null,contact_email:values.contact_email||null,contact_phone:values.contact_phone||null,address:values.address||null,website:values.website||null,primary_color:/^#[0-9a-fA-F]{6}$/.test(values.primary_color||'')?values.primary_color:'#4265e8',updated_at:new Date().toISOString()};
+    if(!allowed.name||!allowed.slug||!/^[a-z0-9-]{3,80}$/.test(allowed.slug))throw new Error('Enter a centre name and a valid 3–80 character URL slug.');
+    const saved=await sb.from('schools').update(allowed).eq('id',profile.school_id).select('id,name,slug,logo_url,contact_email,contact_phone,address,website,primary_color,plan,subscription_status').single();
+    if(saved.error)throw saved.error;
+    window.schoolCloud.schoolSettings=saved.data;
+    return saved.data;
+   },
    inviteParent:async payload=>{const student=await sb.from('students').select('id').eq('school_id',profile.school_id).eq('external_id',String(payload.student_id)).single();if(student.error)throw new Error('Could not find the selected student in the cloud. Save the student record first.');const {data,error}=await sb.functions.invoke('invite-parent',{body:{...payload,student_id:student.data.id}});if(error)throw error;if(data?.error)throw new Error(data.error);return data},
    save:async payload=>{
     if(!['owner','admin'].includes(profile.role))return;
