@@ -89,3 +89,10 @@
 .parent-section-title{margin:20px 0 8px;font-size:14px;color:#293650}
 .parent-child h4{margin:18px 0 8px;font-size:14px;color:#293650}
 .parent-child .table-wrap{margin-bottom:12px}
+
+.assistant-intro{display:flex;align-items:center;gap:14px;padding:18px;background:#f5f7ff;border:1px solid #e4eaff;border-radius:12px;margin:18px 0}
+.assistant-orb{width:44px;height:44px;border-radius:14px;background:#4967e8;color:#fff;display:grid;place-items:center;font-size:23px;flex:none}
+.assistant-intro strong{color:#26334d;font-size:14px}.assistant-intro p,.ai-roadmap p{margin:5px 0 0;color:#7d899e;font-size:12px;line-height:1.6}
+.ai-roadmap{padding:20px;margin-top:16px}.ai-roadmap h3{margin:0;font-size:15px}.ai-roadmap .status{display:inline-block;margin-top:12px}
+.reading-passage{line-height:1.75;background:#f6f8fb;padding:18px;border-radius:10px;margin:18px 0}.writing-lines{line-height:2.3;color:#aab2c1}
+.teacher-answer-key{margin:18px 0;padding:12px;background:#f8f9fc;border-radius:8px}
