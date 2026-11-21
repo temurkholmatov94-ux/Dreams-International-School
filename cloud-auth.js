@@ -141,6 +141,7 @@
      ];
      if(financeRows.length){const saved=await sb.from('finance_transactions').upsert(financeRows,{onConflict:'school_id,external_id'});if(saved.error)throw saved.error}
     }
+    if(profile.role==='accountant')return;
     const localGroups=(payload.groups||[]).map(g=>({school_id:profile.school_id,external_id:String(g.id),name:String(g.name||'').trim(),subject:g.subject||null,teacher_name:g.teacher||null,schedule:g.schedule||null,monthly_fee:Number(g.fee)||0})).filter(g=>g.name);
     if(localGroups.length){
      const up=await sb.from('school_groups').upsert(localGroups,{onConflict:'school_id,external_id'});
