@@ -29,7 +29,11 @@ assert.match(cloud, /\['parent','accountant'\]\.includes\(profile\.role\)/, 'Par
 assert.match(cloud, /const academicPayload=\{students:payload\.students/, 'Academic data must be synchronised separately.');
 assert.match(schema, /create table if not exists public\.school_academic_data/i, 'Academic workspace table must exist in the schema.');
 assert.match(schema, /school_academic_data\.school_id and p\.role in \('owner','admin','teacher'\)/, 'Academic workspace reads must be school- and role-scoped.');
-assert.match(schema, /school_academic_data\.school_id and p\.role in \('owner','admin'\)/, 'Academic workspace writes must be restricted to administrators.');
+assert.match(schema, /school_academic_data\.school_id and p\.role in \('owner','admin','teacher'\)/, 'Academic workspace writes must be restricted to school academic staff.');
+assert.match(cloud, /sb\.from\('student_homework'\)\.select/, 'Homework must be reloaded from cloud records.');
+assert.match(cloud, /sb\.from\('student_results'\)\.select/, 'Grades must be reloaded from cloud records.');
+assert.match(app, /if\(Array\.isArray\(shared\.homework\)\)db\.homework=shared\.homework/, 'Homework cloud records must hydrate the workspace.');
+assert.match(app, /if\(Array\.isArray\(shared\.results\)\)db\.results=shared\.results/, 'Grade cloud records must hydrate the workspace.');
 assert.match(schema, /revoke all privileges on table public\.finance_transactions from public, anon/i, 'Finance table must not be accessible to anonymous users.');
 assert.match(schema, /revoke delete on table public\.finance_transactions from public, anon, authenticated/i, 'Direct finance deletion must be revoked.');
 assert.match(schema, /school_data\.school_id and p\.role in \('owner','admin'\)/, 'Full workspace data must be restricted to owners and admins.');
