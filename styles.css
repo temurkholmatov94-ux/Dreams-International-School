@@ -429,3 +429,54 @@ tr:hover td{background:#fff8f9!important}
  .command-hero{background:linear-gradient(130deg,#171719,#761126 72%,#a90d31)!important}
  .metric-ribbon{box-shadow:0 5px 20px #17171908!important}
 }
+
+
+/* ── CRIMSON NIGHT: dark premium SaaS surface ── */
+:root{--ink:#f5f3f4;--muted:#a19ba0;--line:#33272c;--bg:#090809;--surface:#141114;--canvas:#090809;--hairline:#30252a}
+html,body{background:#090809!important;color:#f5f3f4!important}
+body{background:radial-gradient(ellipse at 88% 0%,#45101e 0,transparent 34rem),radial-gradient(ellipse at 0% 60%,#210b12 0,transparent 42rem),#090809!important}
+.main{background:transparent!important}
+.content{color:#f5f3f4!important}
+.topbar{background:#0d0b0ce8!important;border-color:#2a2024!important;color:#f5f3f4!important}
+.breadcrumbs,.breadcrumbs strong,.date-chip{color:#c7bdc1!important}
+.date-chip{background:#171215!important;border-color:#38252c!important}
+.page-heading{background:linear-gradient(110deg,#180b10,#3a0d1a 56%,#a70d30)!important;box-shadow:0 18px 60px #a90d3024!important}
+.page-heading h1,.page-heading p{color:#fff!important}
+.stat-card,.panel,.page-panel,.finance-panel,.test-studio,.staff-panel,.settings-panel,.insight-stage,.action-stage,.activity-stage,.metric-ribbon{background:linear-gradient(145deg,#191518,#110e10)!important;border:1px solid #38272e!important;color:#f5f3f4!important;box-shadow:0 12px 35px #0006, inset 0 1px #ffffff08!important}
+.stat-top,.stat-foot,.muted-note,.panel-header p,.finance-summary small,td{color:#b1a6ab!important}
+.stat-value,.panel-header h3,.student-cell{color:#fff!important}
+.stat-icon,.metric-icon,.launch-spark{background:#35121d!important;color:#ff526e!important}
+.metric-ribbon{background:linear-gradient(110deg,#191316,#211117)!important}
+.metric-lead span,.section-overline{color:#ff7187!important}
+.command-hero{background:linear-gradient(110deg,#090809 0%,#1c0d13 48%,#750d28 100%)!important;border:1px solid #762035!important}
+.command-copy h2{color:#fff!important}
+.command-copy p{color:#d3c3c8!important}
+.insight-stage,.action-stage,.activity-stage{background:#141114!important}
+.launch-violet,.launch-mint,.launch-peach,.launch-blue{background:#1c1418!important;border-color:#41232d!important;color:#f7e9ed!important}
+.launch-tile strong,.launch-tile small{color:#f5e9ec!important}
+.next-step-card{background:linear-gradient(135deg,#29121a,#40101e)!important;border-color:#642137!important;color:#fff!important}
+.next-step-card p,.next-step-card small{color:#e3cbd2!important}
+.next-step-card button{background:#e51d42!important}
+.quick-action{background:#191417!important;border-color:#3a2930!important;color:#f4e9ed!important}
+.quick-action small{color:#b7a8ae!important}
+.quick-action:hover{background:#28141c!important;border-color:#a82040!important}
+.search,.select,input,textarea,select{background:#171316!important;color:#fff!important;border-color:#443038!important}
+.search::placeholder,input::placeholder,textarea::placeholder{color:#93868c!important}
+table{color:#f4edf0!important}
+th{color:#c2b4ba!important;border-color:#3a2c32!important}
+td{border-color:#2d2227!important}
+tbody tr:hover td{background:#24151b!important}
+.mini-avatar{background:#35121d!important;color:#ff9aaa!important}
+.tag{background:#35121d!important;color:#ff9aaa!important}
+.toolbar .secondary-btn,.secondary-btn{background:#25191e!important;color:#f1dfe5!important;border:1px solid #49303a!important}
+.modal,.modal-card,.dialog{background:#171316!important;color:#fff!important;border:1px solid #49303a!important}
+.modal h2,.modal h3,.modal label{color:#fff!important}
+.nav-divider{background:#302329!important}
+.school-label{color:#b48a98!important}
+.help-card{background:linear-gradient(145deg,#2a111a,#1b1015)!important;border-color:#562035!important}
+.profile{border-color:#302329!important}
+.avatar{background:#541629!important;color:#fff!important}
+.status.absent,.status.cancelled,.status.inactive{background:#3b151f!important;color:#ff91a3!important}
+.status.pending,.status.late{background:#382516!important;color:#ffc47a!important}
+.status.paid,.status.present,.status.active{background:#123126!important;color:#7fe0b5!important}
+@media(max-width:720px){body{background:radial-gradient(ellipse at 50% 0%,#45101e 0,transparent 30rem),#090809!important}.topbar{background:#0d0b0cf2!important}}
