@@ -39,4 +39,9 @@ assert.match(app, /if\(Array\.isArray\(shared\.results\)\)db\.results=shared\.re
 assert.match(schema, /revoke all privileges on table public\.finance_transactions from public, anon/i, 'Finance table must not be accessible to anonymous users.');
 assert.match(schema, /revoke delete on table public\.finance_transactions from public, anon, authenticated/i, 'Direct finance deletion must be revoked.');
 assert.match(schema, /school_data\.school_id and p\.role in \('owner','admin'\)/, 'Full workspace data must be restricted to owners and admins.');
+
+assert.match(schema, /drop policy if exists students_staff_manage/i, 'Legacy broad student policies must be removed.');
+assert.match(schema, /drop policy if exists groups_staff_manage/i, 'Legacy broad group policies must be removed.');
+assert.match(schema, /revoke all privileges on table public\.students, public\.school_groups, public\.attendance_records, public\.student_homework, public\.student_results, public\.parent_student_links from public, anon/i, 'Anonymous access to school records must be revoked.');
+assert.match(schema, /revoke truncate, references, trigger on table public\.students/i, 'Authenticated users must not receive structural table privileges.');
 console.log('Static quality and role-security checks passed.');
