@@ -637,3 +637,77 @@ tbody tr:hover td{background:#fbf7ef!important}
 a,.text-link{color:#790d27!important}
 .status.absent,.status.cancelled,.status.inactive{background:#f5e8df!important;color:#790d27!important}
 @media(max-width:720px){body{background:radial-gradient(ellipse at 50% 0%,#efe2d1 0,transparent 30rem),#fbf8f3!important}.sidebar{background:#fffdfa!important}}
+
+
+/* ── WHITE CANVAS: bright workspace, deep cherry navigation ── */
+:root{--ink:#24171b;--muted:#81747a;--line:#eee7e9;--bg:#faf9fa;--surface:#fff;--canvas:#faf9fa;--hairline:#eee7e9;--crimson:#650b24;--crimson-deep:#430817;--crimson-bright:#b5163d}
+html,body{background:#faf9fa!important;color:#24171b!important}
+body{background:#faf9fa!important}
+.main,.content{background:#faf9fa!important;color:#24171b!important}
+.topbar{background:#ffffff!important;border-color:#eee7e9!important}
+.breadcrumbs,.breadcrumbs strong,.date-chip{color:#75666c!important}
+.date-chip{background:#fff!important;border-color:#eee7e9!important}
+.sidebar{background:linear-gradient(180deg,#260914 0%,#430817 100%)!important;color:#fff!important;border:0!important;box-shadow:8px 0 28px #43081712!important}
+.brand strong{color:#fff!important}
+.brand small{color:#d6aab7!important}
+.brand-mark{background:linear-gradient(145deg,#d52c55,#8e1233)!important;color:#fff!important;box-shadow:0 7px 20px #10000844!important}
+.school-label{color:#c18b9b!important}
+.nav-item{color:#e4cbd2!important}
+.nav-item span{color:#e68ba1!important}
+.nav-item:hover{background:#ffffff12!important;color:#fff!important}
+.nav-item.active{background:linear-gradient(100deg,#8e1233,#641027)!important;color:#fff!important;box-shadow:inset 3px 0 #ff829d,inset 0 0 0 1px #ffffff14!important}
+.nav-item.active span{color:#fff!important}
+.nav-divider{background:#ffffff1c!important}
+.help-card{background:linear-gradient(145deg,#571027,#3b0b1b)!important;border:1px solid #ffffff1a!important;color:#fff!important}
+.help-card p{color:#e0bdc7!important}
+.profile{border-color:#ffffff20!important}
+.profile strong{color:#fff!important}
+.profile small{color:#d6aab7!important}
+.avatar{background:#f7e7ec!important;color:#790d27!important}
+.page-heading{background:linear-gradient(110deg,#fff 0%,#fff 100%)!important;border:1px solid #eee7e9!important;box-shadow:0 8px 28px #24171b08!important}
+.page-heading h1,.page-heading p{color:#24171b!important}
+.page-heading .eyebrow{color:#8e1233!important}
+.page-heading:before{border-color:#e7b8c5!important;box-shadow:0 0 0 32px #b5163d08,0 0 0 68px #b5163d05,0 0 0 108px #b5163d03!important}
+.page-heading .primary-btn{background:#790d27!important;color:#fff!important}
+.command-hero{background:linear-gradient(110deg,#fff 0%,#fff 68%,#fff7f9 100%)!important;border:1px solid #eee7e9!important;box-shadow:0 12px 35px #24171b0a!important}
+.command-copy h2{color:#24171b!important}
+.command-copy p{color:#75666c!important}
+.command-kicker{color:#8e1233!important}
+.command-kicker i{background:#b5163d!important;box-shadow:0 0 0 5px #b5163d14!important}
+.command-copy h2 em{color:#790d27!important}
+.command-primary{background:linear-gradient(135deg,#a8173b,#650b24)!important;color:#fff!important;box-shadow:0 7px 20px #650b2426!important}
+.command-ghost{background:#fff!important;border-color:#e9dce0!important;color:#650b24!important}
+.art-core{background:linear-gradient(145deg,#b5163d,#650b24)!important;color:#fff!important;box-shadow:0 15px 45px #650b2428!important}
+.art-node{background:#fff!important;color:#790d27!important;border-color:#eee0e4!important}
+.metric-ribbon,.stat-card,.panel,.page-panel,.finance-panel,.test-studio,.staff-panel,.settings-panel,.insight-stage,.action-stage,.activity-stage{background:#fff!important;border:1px solid #eee7e9!important;color:#24171b!important;box-shadow:0 5px 22px #24171b08!important}
+.metric-lead span,.section-overline{color:#790d27!important}
+.metric-item strong,.stat-value,.panel-header h3{color:#24171b!important}
+.metric-item em,.stat-top,.stat-foot,.muted-note,.panel-header p,.finance-summary small{color:#8b7d82!important}
+.metric-icon,.metric-icon.mint,.metric-icon.lilac,.metric-icon.peach,.metric-icon.blue,.stat-icon,.stat-card:nth-child(n) .stat-icon{background:#f9edf1!important;color:#8e1233!important}
+.stat-card:before,.stat-card:nth-child(n):before{background:#f9edf1!important}
+.stage-link{background:#f9edf1!important;color:#790d27!important}
+.orbit-income{background:linear-gradient(180deg,#c32a50,#650b24)!important}
+.orbit-expense{background:linear-gradient(180deg,#e6a3b4,#a94a65)!important}
+.legend-income{background:#790d27!important}.legend-expense{background:#d58b9d!important}
+.launch-violet,.launch-mint,.launch-peach,.launch-blue{background:#fff!important;border-color:#eee7e9!important;color:#650b24!important}
+.launch-spark{background:#f9edf1!important;color:#8e1233!important}
+.launch-tile:hover{box-shadow:0 9px 24px #650b2410!important;border-color:#e3c4cd!important}
+.next-step-card{background:linear-gradient(145deg,#fff7f9,#f9edf1)!important;border-color:#eedce2!important;color:#24171b!important}
+.next-step-card p,.next-step-card small{color:#75666c!important}
+.next-step-card button{background:#790d27!important;color:#fff!important}
+.primary-btn,button.primary,.btn-primary{background:linear-gradient(135deg,#a8173b,#650b24)!important;color:#fff!important;box-shadow:0 5px 16px #650b241c!important}
+.secondary-btn,.toolbar .secondary-btn{background:#fff!important;color:#650b24!important;border:1px solid #eee0e4!important}
+.quick-action{background:#fff!important;border-color:#eee7e9!important;color:#24171b!important}
+.quick-action span{color:#8e1233!important}
+.quick-action:hover{background:#fff9fa!important;border-color:#e3c4cd!important}
+input,select,textarea,.search,.select{background:#fff!important;color:#24171b!important;border-color:#e8dfe2!important}
+input:focus,select:focus,textarea:focus{border-color:#a8173b!important;box-shadow:0 0 0 3px #790d2712!important}
+th{color:#8b7d82!important;border-color:#eee7e9!important}
+td{color:#6f6267!important;border-color:#f1ebed!important}
+tbody tr:hover td{background:#fff9fa!important}
+.mini-avatar{background:#f9edf1!important;color:#790d27!important}
+.tag{background:#f9edf1!important;color:#790d27!important}
+.modal,.modal-card,.dialog{background:#fff!important;color:#24171b!important;border-color:#eee7e9!important}
+a,.text-link{color:#790d27!important}
+.status.absent,.status.cancelled,.status.inactive{background:#f9edf1!important;color:#790d27!important}
+@media(max-width:720px){body{background:#faf9fa!important}.sidebar{background:#260914!important}.topbar{background:#fff!important}}
