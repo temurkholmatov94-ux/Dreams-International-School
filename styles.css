@@ -16,3 +16,8 @@
 .parent-invite-form .primary-btn{align-self:end;justify-self:start}.parent-child{margin:0 0 16px}
 @media(max-width:900px){.analytics-grid{grid-template-columns:1fr}.chart-wide{grid-column:auto}}
 @media(max-width:560px){.donut-layout{gap:12px}.donut{width:124px;height:124px;flex-basis:124px}.donut-hole{width:86px;height:86px}.parent-invite-form{grid-template-columns:1fr}.bar-chart{gap:6px}}
+
+.parent-stats{margin:16px 0}
+.parent-alert{display:flex;flex-direction:column;gap:5px;padding:14px 16px;margin:0 0 16px;border:1px solid #f4c8c8;border-radius:12px;background:#fff6f6;color:#9e3434;font-size:12px;line-height:1.5}
+.parent-alert strong{font-size:13px}
+.parent-child{margin-bottom:16px}
