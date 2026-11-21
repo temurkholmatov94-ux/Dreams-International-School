@@ -95,6 +95,32 @@ const questionBank=[
 {topic:'Vocabulary',level:'B1',q:'A person who is “reliable” can be ___.',o:['trusted','ignored','avoided','confused'],a:0},
 {topic:'Vocabulary',level:'B2',q:'The word “reluctant” means ___.',o:['eager','unwilling','certain','delighted'],a:1},
 {topic:'Vocabulary',level:'B2',q:'Choose the opposite of “scarce”.',o:['rare','limited','abundant','insufficient'],a:2}
+,{topic:'Inversion',level:'C1',q:'Rarely ___ such a convincing argument.',o:['I have heard','have I heard','I heard','I had heard'],a:1}
+,{topic:'Inversion',level:'C1',q:'Not until the data was published ___ the scale of the problem.',o:['we realised','did we realise','we had realised','had we realised'],a:1}
+,{topic:'Cleft sentences',level:'C1',q:'It was the lack of funding ___ ultimately delayed the project.',o:['what','which','that','where'],a:2}
+,{topic:'Modal deduction',level:'C1',q:'The lights are on; they ___ be at home.',o:['must','should','would','can'],a:0}
+,{topic:'Advanced collocations',level:'C1',q:'The committee reached a ___ decision after hours of debate.',o:['considered','considerable','considering','considerate'],a:0}
+,{topic:'Advanced vocabulary',level:'C1',q:'“To mitigate” a problem means to ___.',o:['make it worse','reduce its severity','ignore it','predict it'],a:1}
+,{topic:'Concession',level:'C1',q:'___ the initial criticism, the policy proved effective.',o:['Although','Despite','Nevertheless','Whereas'],a:1}
+,{topic:'Participle clauses',level:'C1',q:'___ the report, she identified several inconsistencies.',o:['Having reviewed','Have reviewed','Reviewed having','To reviewing'],a:0}
+,{topic:'Advanced vocabulary',level:'C1',q:'A “pervasive” influence is one that is ___.',o:['short-lived','widespread','unimportant','deliberate'],a:1}
+,{topic:'Register',level:'C1',q:'Which is the most formal alternative to “look into the issue”?',o:['check out the issue','investigate the matter','see what happened','have a look'],a:1}
+,{topic:'Nuanced meaning',level:'C1',q:'“The proposal is feasible” means it is ___.',o:['controversial','practical and achievable','legally binding','already completed'],a:1}
+,{topic:'Dependent prepositions',level:'C1',q:'The findings are consistent ___ earlier research.',o:['to','for','with','at'],a:2}
+,{topic:'Inversion',level:'C2',q:'Little ___ that the decision would have such far-reaching consequences.',o:['they anticipated','did they anticipate','they had anticipated','had they anticipate'],a:1}
+,{topic:'Subjunctive',level:'C2',q:'The panel recommended that the proposal ___ revised.',o:['is','was','be','being'],a:2}
+,{topic:'Advanced syntax',level:'C2',q:'Were it not for her intervention, the negotiations ___ collapsed.',o:['will have','would have','had','would'],a:1}
+,{topic:'Idiomatic precision',level:'C2',q:'His apology did little to ___ the growing resentment.',o:['allay','allure','elicit','elude'],a:0}
+,{topic:'Advanced vocabulary',level:'C2',q:'“Equivocal” most nearly means ___.',o:['unambiguous','open to more than one interpretation','extremely persuasive','irrelevant'],a:1}
+,{topic:'Discourse markers',level:'C2',q:'The evidence is compelling; ___, it does not establish causation.',o:['conversely','nonetheless','thereby','henceforth'],a:1}
+,{topic:'Advanced collocations',level:'C2',q:'The report offers a ___ critique of the prevailing assumptions.',o:['trenchant','trench','trenched','trenching'],a:0}
+,{topic:'Nuanced meaning',level:'C2',q:'A “disingenuous” response is best described as ___.',o:['frank and direct','slightly irrelevant','not entirely candid or sincere','unintentionally humorous'],a:2}
+,{topic:'Advanced vocabulary',level:'C2',q:'To “obviate” the need for further action is to ___.',o:['make it unnecessary','postpone it','complicate it','dispute it'],a:0}
+,{topic:'Inversion',level:'C2',q:'Only after the second review ___ the discrepancy.',o:['they noticed','they had noticed','did they notice','had they notice'],a:2}
+,{topic:'Advanced vocabulary',level:'C2',q:'A “perfunctory” inspection is one that is ___.',o:['meticulous','superficial and routine','unexpectedly thorough','legally required'],a:1}
+,{topic:'Register',level:'C2',q:'Which phrase most appropriately signals a carefully qualified claim?',o:['Everyone knows that','It is indisputable that','It would be premature to conclude that','There is no doubt whatsoever that'],a:2}
+,{topic:'Advanced collocations',level:'C2',q:'The findings call into ___ the validity of the original methodology.',o:['question','doubtful','uncertain','suspicion'],a:0}
+
 ];
 let generatedPaper=[];
 function testStudio(){
