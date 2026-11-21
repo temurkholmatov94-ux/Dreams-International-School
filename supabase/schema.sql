@@ -183,9 +183,9 @@ drop policy if exists school_academic_read_staff on public.school_academic_data;
 create policy school_academic_read_staff on public.school_academic_data for select to authenticated
 using (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=school_academic_data.school_id and p.role in ('owner','admin','teacher')));
 drop policy if exists school_academic_write_admins on public.school_academic_data;
-create policy school_academic_write_admins on public.school_academic_data for insert to authenticated
-with check (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=school_academic_data.school_id and p.role in ('owner','admin')));
+create policy school_academic_write_staff on public.school_academic_data for insert to authenticated
+with check (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=school_academic_data.school_id and p.role in ('owner','admin','teacher')));
 drop policy if exists school_academic_update_admins on public.school_academic_data;
-create policy school_academic_update_admins on public.school_academic_data for update to authenticated
-using (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=school_academic_data.school_id and p.role in ('owner','admin')))
-with check (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=school_academic_data.school_id and p.role in ('owner','admin')));
+create policy school_academic_update_staff on public.school_academic_data for update to authenticated
+using (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=school_academic_data.school_id and p.role in ('owner','admin','teacher')))
+with check (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=school_academic_data.school_id and p.role in ('owner','admin','teacher')));
