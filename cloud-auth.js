@@ -45,7 +45,7 @@
   if(d.error){showGate('Could not load school data: '+d.error.message);return}
   window.schoolCloud={
    schoolId:profile.school_id,profile,canManage:['owner','admin'].includes(profile.role),
-   inviteParent:async payload=>{const {data,error}=await sb.functions.invoke('invite-parent',{body:payload});if(error)throw error;if(data?.error)throw new Error(data.error);return data},
+   inviteParent:async payload=>{const student=await sb.from('students').select('id').eq('school_id',profile.school_id).eq('external_id',String(payload.student_id)).single();if(student.error)throw new Error('Could not find the selected student in the cloud. Save the student record first.');const {data,error}=await sb.functions.invoke('invite-parent',{body:{...payload,student_id:student.data.id}});if(error)throw error;if(data?.error)throw new Error(data.error);return data},
    save:async payload=>{
     if(!['owner','admin'].includes(profile.role))return;
     const cloud=await sb.from('school_data').upsert({school_id:profile.school_id,payload,updated_by:session.user.id,updated_at:new Date().toISOString()},{onConflict:'school_id'});
@@ -57,10 +57,15 @@
     const stored=await sb.from('students').select('id,external_id,full_name').eq('school_id',profile.school_id);
     if(stored.error){console.error('Student lookup failed:',stored.error);return}
     const idByExternal=new Map((stored.data||[]).map(s=>[String(s.external_id),s.id]));
-    const rows=(payload.attendance||[]).map(a=>{const student=(stored.data||[]).find(s=>s.full_name===a.student);const studentId=student?.id;if(!studentId)return null;return {school_id:profile.school_id,student_id:studentId,attendance_date:a.date,status:a.status,marked_by:session.user.id}}).filter(Boolean);
+    const rows=(payload.attendance||[]).map(a=>{const external=String(a.studentId??(payload.students||[]).find(s=>s.name===a.student)?.id??'');const studentId=idByExternal.get(external);if(!studentId)return null;return {school_id:profile.school_id,student_id:studentId,attendance_date:a.date,status:a.status,marked_by:session.user.id}}).filter(Boolean);
     if(rows.length){const saved=await sb.from('attendance_records').upsert(rows,{onConflict:'student_id,attendance_date'});if(saved.error)console.error('Attendance sync failed:',saved.error)}
    }
   };
+  if(profile.role!=='parent'&&d.data?.payload){
+   const payload=d.data.payload;
+   const rows=(payload.students||[]).map(s=>({school_id:profile.school_id,external_id:String(s.id),full_name:s.name,phone:s.phone||null,group_name:s.group||null,monthly_fee:Number(s.fee)||0,status:s.status||'Active'}));
+   if(rows.length){const synced=await sb.from('students').upsert(rows,{onConflict:'school_id,external_id'});if(synced.error)console.error('Initial student sync failed:',synced.error)}
+  }
   const screen=document.getElementById('authScreen');if(screen)screen.remove();profileUi(profile);
   if(profile.role==='parent'){await loadParent(profile);return}
   if(d.data?.payload&&Object.keys(d.data.payload).length&&window.schoolApp)window.schoolApp.setData(d.data.payload);
