@@ -62,6 +62,18 @@
     return saved.data;
    },
    inviteParent:async payload=>{const student=await sb.from('students').select('id').eq('school_id',profile.school_id).eq('external_id',String(payload.student_id)).single();if(student.error)throw new Error('Could not find the selected student in the cloud. Save the student record first.');const {data,error}=await sb.functions.invoke('invite-parent',{body:{...payload,student_id:student.data.id}});if(error)throw error;if(data?.error)throw new Error(data.error);return data},
+   getAnalytics:async()=>{
+    if(!['owner','admin','teacher','accountant'].includes(profile.role))throw new Error('Your account cannot view centre analytics.');
+    const since=new Date();since.setDate(since.getDate()-30);
+    const [students,attendance,results,attempts]=await Promise.all([
+     sb.from('students').select('id,full_name,group_name,status').eq('school_id',profile.school_id).limit(2000),
+     sb.from('attendance_records').select('student_id,attendance_date,status').eq('school_id',profile.school_id).gte('attendance_date',since.toISOString().slice(0,10)).order('attendance_date',{ascending:false}).limit(5000),
+     sb.from('student_results').select('assessment,score,max_score,assessment_date').eq('school_id',profile.school_id).order('assessment_date',{ascending:false}).limit(2000),
+     sb.from('exam_attempts').select('title,cefr_level,topic,question_count,score,completed_at').eq('school_id',profile.school_id).order('completed_at',{ascending:false}).limit(500)
+    ]);
+    for(const item of [students,attendance,results,attempts])if(item.error)throw item.error;
+    return {students:students.data||[],attendance:attendance.data||[],results:results.data||[],attempts:attempts.data||[]};
+   },
    saveExamAttempt:async payload=>{
     if(!['owner','admin','teacher'].includes(profile.role))throw new Error('Your account cannot save exam attempts.');
     const row={school_id:profile.school_id,user_id:session.user.id,title:String(payload.title||'Timed assessment').slice(0,180),cefr_level:payload.cefr_level,topic:String(payload.topic||'All').slice(0,100),question_count:Number(payload.question_count),score:Number(payload.score),answered_count:Number(payload.answered_count),duration_seconds:Number(payload.duration_seconds),answers:Array.isArray(payload.answers)?payload.answers:[]};
