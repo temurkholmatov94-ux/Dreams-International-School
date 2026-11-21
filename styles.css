@@ -85,3 +85,7 @@
 .finance-legend span+span i{background:#e6a04b}
 .finance-payroll{font-size:26px;color:#26334d}
 @media(max-width:640px){.finance-panel{padding:16px}.finance-bars{gap:5px}.finance-bar-pair{gap:3px}}
+
+.parent-section-title{margin:20px 0 8px;font-size:14px;color:#293650}
+.parent-child h4{margin:18px 0 8px;font-size:14px;color:#293650}
+.parent-child .table-wrap{margin-bottom:12px}
