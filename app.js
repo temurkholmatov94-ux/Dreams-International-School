@@ -9,7 +9,7 @@ const sum=(a,k)=>a.reduce((s,x)=>s+(Number(x[k])||0),0);
 const dateFmt=s=>s?new Date(s+'T00:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}):'—';
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const initials=s=>String(s||'?').split(' ').map(x=>x[0]).slice(0,2).join('').toUpperCase();
-function persist(){localStorage.setItem(STORE,JSON.stringify(db));render()}
+function persist(){localStorage.setItem(STORE,JSON.stringify(db));if(window.schoolCloud)window.schoolCloud.save(db).catch(e=>{console.error('Cloud sync failed:',e);notify('Cloud sync failed: '+(e.message||'check connection'))});render()}
 function notify(s){const t=document.querySelector('#toast');t.textContent=s;t.classList.add('show');clearTimeout(timer);timer=setTimeout(()=>t.classList.remove('show'),2400)}
 function stat(label,val,icon,foot){return '<article class="stat-card"><div class="stat-top">'+label+'<span class="stat-icon">'+icon+'</span></div><div class="stat-value">'+val+'</div><div class="stat-foot">'+foot+'</div></article>'}
 function table(headers,rows){return '<div class="table-wrap"><table><thead><tr>'+headers.map(x=>'<th>'+x+'</th>').join('')+'</tr></thead><tbody>'+rows+'</tbody></table></div>'}
@@ -365,5 +365,10 @@ function showParentPortal(children,records,profile,homework=[],results=[]){
 }
 
 window.schoolApp={showParentPortal, setData(data){if(!data||typeof data!=='object')return;db={...structuredClone(initial),...data};localStorage.setItem(STORE,JSON.stringify(db));render()},applyPermissions(){const canManage=!window.schoolCloud||window.schoolCloud.canManage;document.querySelectorAll('[data-modal],[data-delete],#quickAdd,#saveAttendance').forEach(el=>{if(!canManage){el.disabled=true;el.hidden=true}});document.querySelectorAll('.attendance-choice').forEach(el=>{el.disabled=!canManage})}};
-const localPersist=persist;
-persist=function(){localStorage.setItem(STORE,JSON.stringify(db));if(window.schoolCloud)window.schoolCloud.save(db);render()};
+window.schoolApp={showParentPortal, setData(data){if(!data||typeof data!=='object')return;db={...structuredClone(initial),...data};localStorage.setItem(STORE,JSON.stringify(db));render()},mergeSharedData(shared){
+ if(!shared)return;
+ if(Array.isArray(shared.students))db.students=shared.students;
+ if(Array.isArray(shared.groups))db.groups=shared.groups;
+ if(Array.isArray(shared.attendance))db.attendance=shared.attendance;
+ localStorage.setItem(STORE,JSON.stringify(db));render();
+},applyPermissions(){const canManage=!window.schoolCloud||window.schoolCloud.canManage;document.querySelectorAll('[data-modal],[data-delete],#quickAdd,#saveAttendance').forEach(el=>{if(!canManage){el.disabled=true;el.hidden=true}});document.querySelectorAll('.attendance-choice').forEach(el=>{el.disabled=!canManage})}};
