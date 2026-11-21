@@ -3,6 +3,8 @@ name: Pull request quality checks
 on:
   pull_request:
     branches: ['main-/-(root)']
+  push:
+    branches: ['security/role-permissions-audit-2026-11-21']
   workflow_dispatch:
 
 permissions:
