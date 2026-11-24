@@ -28,7 +28,7 @@ assert.match(app, /async function saveAttendance\s*\(/, 'Attendance save must aw
 assert.match(app, /const result=await persist\(\)/, 'Attendance must wait for persistence before reporting success.');
 assert.match(app, /Attendance saved to the school cloud\./, 'Cloud attendance success must be reported only after persistence resolves.');
 assert.match(app, /canMarkAttendance=!window\.schoolCloud\|\|\['owner','admin','teacher'\]\.includes\(role\)/, 'Teachers must be allowed to mark attendance for their assigned groups.');
-assert.match(cloud, /attendance_staff_insert/, 'Attendance insert RLS policy must exist.');
-assert.match(cloud, /attendance_staff_update/, 'Attendance update RLS policy must exist.');
+assert.match(cloud, /from\('attendance_records'\)\.upsert\(rows,\{onConflict:'student_id,attendance_date'\}\)/, 'Attendance must upsert by the student/date key.');
+assert.match(cloud, /\.eq\('school_id',profile\.school_id\)/, 'Attendance cloud operations must be school scoped.');
 
 console.log('Static quality checks passed.');
