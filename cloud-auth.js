@@ -269,7 +269,6 @@
   }
   const screen=document.getElementById('authScreen');if(screen)screen.remove();profileUi(profile);
   if(profile.role==='parent'){await loadParent(profile);return}
-  if(d.data?.payload&&Object.keys(d.data.payload).length&&window.schoolApp)window.schoolApp.setData(d.data.payload);
   if(profile.role==='teacher'&&window.schoolApp)window.schoolApp.setData({});
   if(profile.role!=='parent'&&window.schoolCloud.refreshSharedRecords){
    try{const shared=await window.schoolCloud.refreshSharedRecords();window.schoolApp?.mergeSharedData(shared)}catch(e){console.error('Shared records refresh failed:',e?.message||e,e)}
