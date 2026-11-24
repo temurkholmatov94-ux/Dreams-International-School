@@ -376,7 +376,24 @@ async function inviteParent(e){
  catch(err){notify(err.message||'Could not send invitation')}finally{button.disabled=false;button.textContent='Send parent invitation'}
 }
 
-async function removeRecord(type,id){if(!confirm('Remove this record?'))return;try{if(window.schoolCloud?.deleteSchoolRecord)await window.schoolCloud.deleteSchoolRecord(type,String(id));else if(['payments','expenses'].includes(type)&&window.schoolCloud?.deleteFinanceTransaction)await window.schoolCloud.deleteFinanceTransaction(type,String(id))}catch(e){notify('Cloud deletion failed: '+(e.message||'Unknown error'));return}db[type]=db[type].filter(x=>String(x.id)!==String(id));persist();notify('Record removed')}
+async function removeRecord(type,id){
+ const target=(db[type]||[]).find(x=>String(x.id)===String(id));
+ if(!target){notify('Record could not be found.');return}
+ const prompt=type==='teachers'?'Remove this teacher? Their group, lesson and assessment assignments will also be cleared.':'Remove this record?';
+ if(!confirm(prompt))return;
+ try{
+  if(window.schoolCloud?.deleteSchoolRecord)await window.schoolCloud.deleteSchoolRecord(type,String(id));
+  else if(['payments','expenses'].includes(type)&&window.schoolCloud?.deleteFinanceTransaction)await window.schoolCloud.deleteFinanceTransaction(type,String(id));
+ }catch(e){notify('Cloud deletion failed: '+(e.message||'Unknown error'));return}
+ db[type]=db[type].filter(x=>String(x.id)!==String(id));
+ if(type==='teachers'){
+  const name=String(target.name||'');
+  for(const key of ['groups','lessons','homework','assessments']){
+   if(Array.isArray(db[key]))db[key]=db[key].map(row=>row.teacher===name?{...row,teacher:''}:row);
+  }
+ }
+ persist();notify(type==='teachers'?'Teacher removed and assignments cleared':'Record removed');
+}
 function fieldsFor(type){const list=db[type]||[];const groupOptions=db.groups.map(g=>g.name);const studentOptions=db.students.map(s=>s.name);const field=(name,label,kind='text',opts=[],value='')=>({name,label,kind,opts,value});const defs={students:[field('name','Full name'),field('phone','Phone number','tel'),field('group','Group','select',groupOptions),field('fee','Monthly fee (UZS)','number',[],230000)],teachers:[field('name','Full name'),field('subject','Subject'),field('phone','Phone number','tel'),field('salary','Monthly salary (UZS)','number',[],0),field('status','Employment status','select',['Active','Inactive','On leave'],'Active')],groups:[field('name','Group name'),field('subject','Subject'),field('teacher','Teacher','select',db.teachers.map(t=>t.name)),field('schedule','Schedule'),field('students','Student count','number',[],0),field('fee','Monthly fee (UZS)','number',[],230000)],payments:[field('student','Student','select',studentOptions),field('group','Group','select',groupOptions),field('amount','Amount (UZS)','number',[],230000),field('date','Payment date','date',[],todayISO()),field('method','Payment method','select',['Cash','Card','Bank transfer']),field('status','Status','select',['Paid','Pending'])],expenses:[field('title','Description'),field('category','Category','select',['Rent','Salary','Utilities','Supplies','Marketing','Other']),field('amount','Amount (UZS)','number'),field('date','Date','date',[],todayISO())],lessons:[field('title','Lesson topic'),field('group','Group','select',groupOptions),field('teacher','Teacher','select',db.teachers.map(t=>t.name)),field('date','Lesson date','date',[],todayISO()),field('description','Lesson notes')],homework:[field('title','Homework title'),field('group','Group','select',groupOptions),field('teacher','Teacher','select',db.teachers.map(t=>t.name)),field('due_date','Due date','date',[],todayISO()),field('description','Instructions')],assessments:[field('title','Assessment title'),field('group','Group','select',groupOptions),field('teacher','Teacher','select',db.teachers.map(t=>t.name)),field('date','Assessment date','date',[],todayISO()),field('max_score','Maximum score','number',[],100)],results:[field('student','Student','select',studentOptions),field('assessment','Assessment','select',db.assessments.map(x=>x.title)),field('score','Score','number'),field('max_score','Maximum score','number',[],100),field('date','Date','date',[],todayISO()),field('feedback','Teacher feedback')],attendance:[field('date','Date','date',[],todayISO())]};return defs[type]||[]}
 let modalType='',editingRecordId=null;
 function renderRecordFields(type,record={}){
