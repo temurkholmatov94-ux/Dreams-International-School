@@ -420,7 +420,7 @@ document.querySelector('#recordForm').addEventListener('submit',e=>{
   closeModal();persist();notify('Teacher details updated');
  }else{
   row.id=Math.max(0,...db[modalType].map(x=>Number(x.id)||0))+1;
-  if(modalType==='students'||modalType==='teachers')row.status='Active';
+  if(modalType==='students')row.status='Active';else if(modalType==='teachers'&&!row.status)row.status='Active';
   db[modalType].push(row);closeModal();persist();notify('New '+modalType.slice(0,-1)+' saved');
  }
 });
