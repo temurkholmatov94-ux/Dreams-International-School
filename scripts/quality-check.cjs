@@ -50,4 +50,10 @@ assert.match(app, /const canAdd=type=>admin\|\|\(teacher&&\['results','homework'
 assert.match(app, /const canRemove=type=>admin\|\|\(accountant&&\['payments','expenses'\]\.includes\(type\)\)/, 'Teacher record deletion controls must remain disabled.');
 assert.match(cloud, /if\(profile\.role==='teacher'\)\{[\s\S]*?academicPayload=\{\.\.\.current,attendance:academicPayload\.attendance/, 'Teacher saves must preserve owner-managed student and group workspace data.');
 assert.match(cloud, /if\(\['owner','admin'\]\.includes\(profile\.role\)\)\{[\s\S]*?const localGroups=/, 'Only owners and admins may sync student/group master data.');
+
+assert.match(schema, /student_homework_student_school_fk[\\s\\S]*?foreign key \\(school_id,student_id\\)/i, 'Homework must reference a student in the same school.');
+assert.match(schema, /student_results_student_school_fk[\\s\\S]*?foreign key \\(school_id,student_id\\)/i, 'Results must reference a student in the same school.');
+assert.match(schema, /attendance_records for select to authenticated using \\([\\s\\S]*?p\\.role in \\('owner','admin','teacher'\\)/, 'Accountants must not read attendance records.');
+assert.match(schema, /student_homework for select to authenticated using \\([\\s\\S]*?p\\.role in \\('owner','admin','teacher'\\)/, 'Accountants must not read homework records.');
+assert.match(schema, /student_results for select to authenticated using \\([\\s\\S]*?p\\.role in \\('owner','admin','teacher'\\)/, 'Accountants must not read academic results.');
 console.log('Static quality and role-security checks passed.');
