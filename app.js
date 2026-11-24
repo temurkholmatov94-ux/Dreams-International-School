@@ -330,7 +330,7 @@ function staff(){
 async function loadStaff(){
  const box=document.querySelector('#staffRows');if(!box)return;
  try{const {data,error}=await window.schoolSupabase.functions.invoke('manage-staff',{body:{action:'list'}});if(error)throw error;if(data?.error)throw new Error(data.error);
- const rows=(data.staff||[]).map(x=>'<tr><td><strong>'+esc(x.full_name)+'</strong></td><td>'+esc(x.role)+'</td><td>'+esc(x.teachers?.full_name||'—')+'</td><td>'+dateFmt(x.created_at)+'</td></tr>').join('');
+ const rows=(data.staff||[]).map(x=>'<tr><td><strong>'+esc(x.full_name)+'</strong></td><td>'+esc(x.role)+'</td><td>'+esc(x.teacher_name||'—')+'</td><td>'+dateFmt(x.created_at)+'</td></tr>').join('');
  box.innerHTML=table(['NAME','ROLE','TEACHER RECORD','ADDED'],rows||'<tr><td colspan="4">No staff accounts found.</td></tr>');
  }catch(e){box.innerHTML='<p class="muted-note">'+esc(e.message||'Could not load staff list')+'</p>'}
 }
