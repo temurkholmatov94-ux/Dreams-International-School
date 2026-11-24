@@ -30,8 +30,6 @@ assert.match(cloud, /let academicPayload=\{students:payload\.students/, 'Academi
 assert.match(cloud, /academicPayload=\{\.\.\.current,attendance:academicPayload\.attendance/, 'Teacher saves must preserve owner-managed master data.');
 assert.match(schema, /create table if not exists public\.school_academic_data/i, 'Academic workspace table must exist in the schema.');
 assert.match(schema, /school_academic_data for select to authenticated[\s\S]*?school_academic_data\.school_id and p\.role in \('owner','admin','teacher'\)/, 'Academic workspace reads must be school- and role-scoped.');
-assert.match(schema, /school_academic_data for insert to authenticated[\s\S]*?school_academic_data\.school_id and p\.role in \('owner','admin','teacher'\)/, 'Academic workspace inserts must be limited to school academic staff.');
-assert.match(schema, /school_academic_data for update to authenticated[\s\S]*?school_academic_data\.school_id and p\.role in \('owner','admin','teacher'\)/, 'Academic workspace updates must be limited to school academic staff.');
 assert.match(schema, /school_data for select to authenticated[\s\S]*?school_data\.school_id and p\.role in \('owner','admin'\)/, 'Full workspace reads must be restricted to owners and admins.');
 assert.match(cloud, /sb\.from\('student_homework'\)\.select/, 'Homework must be reloaded from cloud records.');
 assert.match(cloud, /sb\.from\('student_results'\)\.select/, 'Grades must be reloaded from cloud records.');
@@ -56,4 +54,8 @@ assert.match(schema, /student_results_student_school_fk[\\s\\S]*?foreign key \\(
 assert.match(schema, /attendance_records for select to authenticated using \\([\\s\\S]*?p\\.role in \\('owner','admin','teacher'\\)/, 'Accountants must not read attendance records.');
 assert.match(schema, /student_homework for select to authenticated using \\([\\s\\S]*?p\\.role in \\('owner','admin','teacher'\\)/, 'Accountants must not read homework records.');
 assert.match(schema, /student_results for select to authenticated using \\([\\s\\S]*?p\\.role in \\('owner','admin','teacher'\\)/, 'Accountants must not read academic results.');
+assert.match(schema, /school_academic_data for insert to authenticated[\\s\\S]*?school_academic_data\\.school_id and p\\.role in \\('owner','admin'\\)/, 'Only owners/admins may write the shared academic workspace.');
+assert.match(schema, /school_academic_data for update to authenticated[\\s\\S]*?school_academic_data\\.school_id and p\\.role in \\('owner','admin'\\)/, 'Only owners/admins may update the shared academic workspace.');
+assert.match(cloud, /const homeworkRows=\\(payload\\.homework\\|\\|\\[\\]\\)\\.flatMap/, 'Group homework must be expanded to each student for cloud persistence.');
+assert.match(cloud, /if\\(\\['owner','admin'\\]\\.includes\\(profile\\.role\\)\\)\\{[\\s\\S]*?const academicPayload=/, 'Only owners/admins may write the shared academic workspace.');
 console.log('Static quality and role-security checks passed.');
