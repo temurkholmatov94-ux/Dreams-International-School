@@ -55,7 +55,7 @@
   const schoolResult=await sb.from('schools').select('id,name,slug,logo_url,contact_email,contact_phone,address,website,primary_color,plan,subscription_status').eq('id',profile.school_id).single();
   if(schoolResult.error)throw schoolResult.error;
   const schoolSettings=schoolResult.data;
-  const d=profile.role==='parent'?{data:null,error:null}:await sb.from('school_data').select('payload').eq('school_id',profile.school_id).maybeSingle();
+  const d=['owner','admin'].includes(profile.role)?await sb.from('school_data').select('payload').eq('school_id',profile.school_id).maybeSingle():{data:null,error:null};
   if(d.error){showGate('Could not load school data: '+d.error.message);return}
   window.schoolCloud={
    schoolId:profile.school_id,profile,canManage:['owner','admin'].includes(profile.role),
@@ -92,7 +92,7 @@
     }
     const tableTargets={students:['students','external_id'],groups:['school_groups','external_id'],results:['student_results','external_id']};
     if(tableTargets[type]){
-     if(!['owner','admin','teacher'].includes(profile.role))throw new Error('Your account cannot remove this school record.');
+     if(!['owner','admin'].includes(profile.role))throw new Error('Only school administrators can remove this record.');
      const [table,key]=tableTargets[type];
      const removed=await sb.from(table).delete().eq('school_id',profile.school_id).eq(key,recordId);
      if(removed.error)throw removed.error;
@@ -167,6 +167,7 @@
      if(financeRows.length){const saved=await sb.from('finance_transactions').upsert(financeRows,{onConflict:'school_id,external_id'});if(saved.error)throw saved.error}
     }
     if(profile.role==='accountant')return;
+    if(['owner','admin'].includes(profile.role)){
     const localGroups=(payload.groups||[]).map(g=>({school_id:profile.school_id,external_id:String(g.id),name:String(g.name||'').trim(),subject:g.subject||null,teacher_name:g.teacher||null,schedule:g.schedule||null,monthly_fee:Number(g.fee)||0})).filter(g=>g.name);
     if(localGroups.length){
      const up=await sb.from('school_groups').upsert(localGroups,{onConflict:'school_id,external_id'});
@@ -176,6 +177,7 @@
     if(localStudents.length){
      const up=await sb.from('students').upsert(localStudents,{onConflict:'school_id,external_id'});
      if(up.error)throw up.error;
+    }
     }
     const stored=await sb.from('students').select('id,external_id,full_name').eq('school_id',profile.school_id);
     if(stored.error)throw stored.error;
