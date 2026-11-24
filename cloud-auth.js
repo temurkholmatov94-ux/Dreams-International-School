@@ -262,8 +262,10 @@
    },
   };
   if(profile.role!=='parent'&&d.data?.payload){
-   const payload=window.schoolApp?.setData(d.data.payload)||d.data.payload;
-   await window.schoolCloud.save(payload);
+   // Restore the saved workspace locally, but never replay the entire legacy
+   // payload to Supabase during sign-in. Timetable writes must happen only
+   // after an explicit user save so stale duplicate slots cannot block login.
+   window.schoolApp?.setData(d.data.payload);
   }
   const screen=document.getElementById('authScreen');if(screen)screen.remove();profileUi(profile);
   if(profile.role==='parent'){await loadParent(profile);return}
