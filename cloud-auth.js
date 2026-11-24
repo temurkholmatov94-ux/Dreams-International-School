@@ -161,15 +161,9 @@
      const cloud=await sb.from('school_data').upsert({school_id:profile.school_id,payload,updated_by:session.user.id,updated_at:updatedAt},{onConflict:'school_id'});
      if(cloud.error)throw cloud.error;
     }
-    if(['owner','admin','teacher'].includes(profile.role)){
+    if(['owner','admin'].includes(profile.role)){
      const updatedAt=new Date().toISOString();
-     let academicPayload={students:payload.students||[],groups:payload.groups||[],attendance:payload.attendance||[],lessons:payload.lessons||[],homework:payload.homework||[],assessments:payload.assessments||[],results:payload.results||[]};
-     if(profile.role==='teacher'){
-      const existing=await sb.from('school_academic_data').select('payload').eq('school_id',profile.school_id).maybeSingle();
-      if(existing.error)throw existing.error;
-      const current=existing.data?.payload||{};
-      academicPayload={...current,attendance:academicPayload.attendance,lessons:academicPayload.lessons,homework:academicPayload.homework,assessments:academicPayload.assessments,results:academicPayload.results};
-     }
+     const academicPayload={students:payload.students||[],groups:payload.groups||[],attendance:payload.attendance||[],lessons:payload.lessons||[],homework:payload.homework||[],assessments:payload.assessments||[],results:payload.results||[]};
      const academic=await sb.from('school_academic_data').upsert({school_id:profile.school_id,payload:academicPayload,updated_by:session.user.id,updated_at:updatedAt},{onConflict:'school_id'});
      if(academic.error)throw academic.error;
     }
@@ -201,10 +195,11 @@
      const saved=await sb.from('attendance_records').upsert(rows,{onConflict:'student_id,attendance_date'});
      if(saved.error)throw saved.error;
     }
-    const homeworkRows=(payload.homework||[]).map(x=>{
-     const student=idByName.get(x.student)||idByExternal.get(String(x.studentId||''));
-     return student?{school_id:profile.school_id,student_id:student,external_id:String(x.id),title:x.title,description:x.description||null,assigned_by:x.teacher||null,due_date:x.due_date||null}:null;
-    }).filter(Boolean);
+    const homeworkRows=(payload.homework||[]).flatMap(x=>{
+     const direct=idByName.get(x.student)||idByExternal.get(String(x.studentId||''));
+     const targets=direct?[direct]:(payload.students||[]).filter(s=>!x.group||s.group===x.group).map(s=>idByExternal.get(String(s.id))).filter(Boolean);
+     return targets.map(student=>({school_id:profile.school_id,student_id:student,external_id:String(x.id),title:x.title,description:x.description||null,assigned_by:x.teacher||null,due_date:x.due_date||null}));
+    });
     if(homeworkRows.length){const saved=await sb.from('student_homework').upsert(homeworkRows,{onConflict:'school_id,external_id,student_id'});if(saved.error)throw saved.error}
     const resultRows=(payload.results||[]).map(x=>{
      const student=idByName.get(x.student)||idByExternal.get(String(x.studentId||''));
