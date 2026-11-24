@@ -66,3 +66,7 @@ The repository includes a GitHub Actions workflow for Pages. In GitHub, open Set
 5. In **Authentication → Security and Protection**, enable leaked-password protection.
 
 The parent invitation Edge Function is deployed as `invite-parent` with JWT verification enabled. It redirects invitation links to the published website.
+
+
+### Teacher data permissions — security review
+The bootstrap schema now limits student and group record creation, editing, and deletion to owner/admin roles. Teachers retain read access under the school-scoped read policies and the attendance workflow remains separately governed. This change updates the repository schema only; it does not alter an already-provisioned Supabase database. Before using real student data, apply the matching policy migration in the live Supabase SQL Editor and verify the live policies under Database → Policies. Teacher access is currently school-wide for student/group reads and attendance; per-assigned-group isolation is not yet implemented.
