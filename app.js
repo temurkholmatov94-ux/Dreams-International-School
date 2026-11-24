@@ -27,6 +27,38 @@ const money=n=>new Intl.NumberFormat('uz-UZ').format(Number(n)||0)+' UZS';
 const sum=(a,k)=>a.reduce((s,x)=>s+(Number(x[k])||0),0);
 const dateFmt=s=>s?new Date(s+'T00:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}):'—';
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let accessibilityFieldId=0;
+function ensureFormAccessibility(root=document){
+ const controls=root.querySelectorAll?root.querySelectorAll('input,select,textarea'): [];
+ controls.forEach(el=>{
+  if(!el.id){
+   let id;
+   do{id='dis-field-'+(++accessibilityFieldId)}while(document.getElementById(id));
+   el.id=id;
+  }
+  if(!el.name && !['submit','button','reset'].includes((el.type||'').toLowerCase())) el.name=el.id;
+  const wrappingLabel=el.closest('label');
+  const field=el.closest('.field');
+  const fieldLabel=field?.querySelector('label');
+  if(fieldLabel && !wrappingLabel){
+   fieldLabel.htmlFor=el.id;
+  }
+  const associated=wrappingLabel || (fieldLabel && fieldLabel.htmlFor===el.id ? fieldLabel : null);
+  if(!associated && !el.getAttribute('aria-label')){
+   const placeholder=el.getAttribute('placeholder');
+   const student=el.getAttribute('data-student');
+   const labelText=fieldLabel?.textContent?.trim();
+   el.setAttribute('aria-label',student ? 'Attendance status for '+student : (labelText || placeholder || el.name || 'Form field'));
+  }
+ });
+}
+if(!window.__disAccessibilityObserver && document.body){
+ window.__disAccessibilityObserver=new MutationObserver(records=>{
+  if(records.some(r=>r.addedNodes.length)) ensureFormAccessibility(document);
+ });
+ window.__disAccessibilityObserver.observe(document.body,{childList:true,subtree:true});
+}
+
 const initials=s=>String(s||'?').split(' ').map(x=>x[0]).slice(0,2).join('').toUpperCase();
 function persist(){
  const snapshot=JSON.parse(JSON.stringify(db));
@@ -356,7 +388,7 @@ function render(){
  setText('#breadcrumbTitle',meta[0]||'Dashboard overview');
  const pageHeading=document.querySelector('.page-heading');if(pageHeading)pageHeading.hidden=page==='dashboard';
  setText('#studentNavCount',Array.isArray(db.students)?db.students.length:0);
- const content=document.querySelector('#pageContent');if(content)content.innerHTML=activeView();
+ const content=document.querySelector('#pageContent');if(content)content.innerHTML=activeView();ensureFormAccessibility(document);
  if(page==='teststudio')loadExamHistory();
  if(page==='staff'){const select=document.querySelector('#staffTeacherSelect');if(select)select.innerHTML='<option value="">Select a teacher</option>'+db.teachers.map(t=>'<option value="'+esc(t.cloud_id||'')+'">'+esc(t.name)+' — '+esc(t.subject||'')+'</option>').join('');}
  document.querySelectorAll('.nav-item').forEach(b=>b.classList.toggle('active',b.dataset.page===page));
@@ -426,7 +458,7 @@ function openModal(type){
  if(type==='attendance'){go('attendance');notify('Use the daily register to mark attendance.');return}
  if(type==='reports'){backup();return}
  document.querySelector('#modalTitle').textContent='Add '+type.slice(0,-1);
- document.querySelector('#formFields').innerHTML=renderRecordFields(type);
+ document.querySelector('#formFields').innerHTML=renderRecordFields(type);ensureFormAccessibility(document.querySelector('#recordDialog'));
  document.querySelector('#recordDialog').showModal();
 }
 function editRecord(type,id){
