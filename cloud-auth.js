@@ -203,8 +203,33 @@
      return {school_id:profile.school_id,external_id:String(x.id),group_id:groupId,teacher_id:teacherId,weekday,starts_at:x.starts_at,ends_at:x.ends_at,room:x.room||null,effective_from:x.effective_from||new Date().toISOString().slice(0,10),effective_until:x.effective_until||null,status:x.status||'Scheduled'};
     }).filter(Boolean);
     if(timetableRows.length){
-     const saved=await sb.from('class_timetable').upsert(timetableRows,{onConflict:'school_id,external_id'});
-     if(saved.error)throw saved.error;
+     // Ignore stale/duplicate legacy slots during routine workspace sync.
+     // A conflicting timetable row must never prevent attendance, student,
+     // homework or finance changes from being saved.
+     const current=await sb.from('class_timetable').select('external_id,weekday,starts_at,ends_at,room,effective_from,effective_until,status,teacher_id,group_id').eq('school_id',profile.school_id);
+     if(current.error)throw current.error;
+     const incomingIds=new Set(timetableRows.map(r=>String(r.external_id)));
+     const accepted=[];
+     const overlaps=(a,b)=>{
+      if(a.status!=='Scheduled'||b.status!=='Scheduled'||Number(a.weekday)!==Number(b.weekday))return false;
+      const aEnd=a.effective_until||'9999-12-31',bEnd=b.effective_until||'9999-12-31';
+      if(a.effective_from>bEnd||b.effective_from>aEnd)return false;
+      if(!(String(a.starts_at)<String(b.ends_at)&&String(b.starts_at)<String(a.ends_at)))return false;
+      const sameRoom=a.room&&b.room&&String(a.room).trim()&&String(b.room).trim()&&String(a.room).trim().toLowerCase()===String(b.room).trim().toLowerCase();
+      return a.teacher_id===b.teacher_id||a.group_id===b.group_id||sameRoom;
+     };
+     const existing=(current.data||[]).filter(r=>!incomingIds.has(String(r.external_id)));
+     for(const row of timetableRows){
+      if(existing.some(r=>overlaps(row,r))||accepted.some(r=>overlaps(row,r))){
+       console.warn('Skipped conflicting legacy timetable entry:',row.external_id);
+       continue;
+      }
+      accepted.push(row);
+     }
+     if(accepted.length){
+      const saved=await sb.from('class_timetable').upsert(accepted,{onConflict:'school_id,external_id'});
+      if(saved.error)throw saved.error;
+     }
     }
     const localStudents=(payload.students||[]).map(s=>({school_id:profile.school_id,external_id:String(s.id),full_name:String(s.name||'').trim(),phone:s.phone||null,group_name:s.group||null,monthly_fee:Number(s.fee)||0,status:s.status||'Active'})).filter(s=>s.full_name);
     if(localStudents.length){
