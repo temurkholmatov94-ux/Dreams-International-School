@@ -224,3 +224,31 @@ grant select, insert, update, delete on table public.students, public.school_gro
 revoke all privileges on table public.schools, public.school_profiles from public, anon;
 revoke insert, update, delete, truncate, references, trigger on table public.schools, public.school_profiles from authenticated;
 grant select on table public.schools, public.school_profiles to authenticated;
+
+
+-- Ensure academic records cannot point at a student in another school.
+do $$ begin
+ if not exists(select 1 from pg_constraint where conname='student_homework_student_school_fk') then
+  alter table public.student_homework add constraint student_homework_student_school_fk foreign key (school_id,student_id) references public.students(school_id,id) on delete cascade;
+ end if;
+ if not exists(select 1 from pg_constraint where conname='student_results_student_school_fk') then
+  alter table public.student_results add constraint student_results_student_school_fk foreign key (school_id,student_id) references public.students(school_id,id) on delete cascade;
+ end if;
+end $$;
+
+-- Accountants may view student/group details for billing, not attendance or academic performance.
+drop policy if exists attendance_school_or_parent_read on public.attendance_records;
+create policy attendance_school_or_parent_read on public.attendance_records for select to authenticated using (
+ exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=attendance_records.school_id and p.role in ('owner','admin','teacher'))
+ or exists(select 1 from public.parent_student_links l where l.student_id=attendance_records.student_id and l.school_id=attendance_records.school_id and l.parent_user_id=(select auth.uid()))
+);
+drop policy if exists homework_parent_or_staff_read on public.student_homework;
+create policy homework_parent_or_staff_read on public.student_homework for select to authenticated using (
+ exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=student_homework.school_id and p.role in ('owner','admin','teacher'))
+ or exists(select 1 from public.parent_student_links l where l.student_id=student_homework.student_id and l.school_id=student_homework.school_id and l.parent_user_id=(select auth.uid()))
+);
+drop policy if exists results_parent_or_staff_read on public.student_results;
+create policy results_parent_or_staff_read on public.student_results for select to authenticated using (
+ exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=student_results.school_id and p.role in ('owner','admin','teacher'))
+ or exists(select 1 from public.parent_student_links l where l.student_id=student_results.student_id and l.school_id=student_results.school_id and l.parent_user_id=(select auth.uid()))
+);
