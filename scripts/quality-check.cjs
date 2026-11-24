@@ -24,4 +24,11 @@ assert.match(cloud, /status:'Cancelled'/, 'Financial removals must preserve ledg
 assert.match(cloud, /if\(profile\.role==='accountant'\)return/, 'Accountant sync must not write academic workspace records.');
 assert.doesNotMatch(config, /anonKey\\s*:\\s*['\"][^'\"]*(?:service_role|sb_secret)/i, 'Privileged Supabase keys must never ship to the browser.');
 assert.match(config, /sb_publishable_|anonKey/, 'A public browser key must be configured.');
+assert.match(app, /async function saveAttendance\s*\(/, 'Attendance save must await its cloud result.');
+assert.match(app, /const result=await persist\(\)/, 'Attendance must wait for persistence before reporting success.');
+assert.match(app, /Attendance saved to the school cloud\./, 'Cloud attendance success must be reported only after persistence resolves.');
+assert.match(app, /canMarkAttendance=!window\.schoolCloud\|\|\['owner','admin','teacher'\]\.includes\(role\)/, 'Teachers must be allowed to mark attendance for their assigned groups.');
+assert.match(cloud, /attendance_staff_insert/, 'Attendance insert RLS policy must exist.');
+assert.match(cloud, /attendance_staff_update/, 'Attendance update RLS policy must exist.');
+
 console.log('Static quality checks passed.');
