@@ -97,14 +97,14 @@ create table if not exists public.attendance_records (
   status text not null check (status in ('Present','Absent','Late','Excused')),
   note text, marked_by uuid references auth.users(id), created_at timestamptz not null default now(),
   unique (student_id,attendance_date),
-  foreign key (school_id,student_id) references public.students(school_id,id) on delete cascade
+  foreign key (school_id, student_id) references public.students(school_id, id) on delete cascade
 );
 create table if not exists public.parent_student_links (
   id uuid primary key default gen_random_uuid(), school_id uuid not null references public.schools(id) on delete cascade,
   parent_user_id uuid not null references auth.users(id) on delete cascade, student_id uuid not null,
   relationship text not null default 'Parent', created_at timestamptz not null default now(),
   unique (parent_user_id,student_id),
-  foreign key (school_id,student_id) references public.students(school_id,id) on delete cascade
+  foreign key (school_id, student_id) references public.students(school_id, id) on delete cascade
 );
 create index if not exists school_groups_school_idx on public.school_groups(school_id);
 create index if not exists students_school_idx on public.students(school_id);
@@ -229,10 +229,10 @@ grant select on table public.schools, public.school_profiles to authenticated;
 -- Ensure academic records cannot point at a student in another school.
 do $$ begin
  if not exists(select 1 from pg_constraint where conname='student_homework_student_school_fk') then
-  alter table public.student_homework add constraint student_homework_student_school_fk foreign key (school_id,student_id) references public.students(school_id,id) on delete cascade;
+  alter table public.student_homework add constraint student_homework_student_school_fk foreign key (school_id, student_id) references public.students(school_id, id) on delete cascade;
  end if;
  if not exists(select 1 from pg_constraint where conname='student_results_student_school_fk') then
-  alter table public.student_results add constraint student_results_student_school_fk foreign key (school_id,student_id) references public.students(school_id,id) on delete cascade;
+  alter table public.student_results add constraint student_results_student_school_fk foreign key (school_id, student_id) references public.students(school_id, id) on delete cascade;
  end if;
 end $$;
 
