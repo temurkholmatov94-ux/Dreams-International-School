@@ -33,5 +33,9 @@ assert.match(cloud, /\.eq\('school_id',profile\.school_id\)/, 'Attendance cloud 
 assert.match(cloud, /function isMissingOptionalRelation\(error\)/, 'Optional parent portal tables must not block attendance when they are not provisioned.');
 assert.match(cloud, /homework\.error&&!isMissingOptionalRelation\(homework\.error\)/, 'Unexpected homework query errors must remain visible.');
 assert.match(cloud, /results\.error&&!isMissingOptionalRelation\(results\.error\)/, 'Unexpected results query errors must remain visible.');
+const schema = read('supabase/schema.sql');
+assert.match(schema, /create policy groups_admin_manage[\s\S]*?p\.role in \('owner','admin'\)/, 'Only owners/admins may manage groups through RLS.');
+assert.match(schema, /create policy students_admin_manage[\s\S]*?p\.role in \('owner','admin'\)/, 'Only owners/admins may manage student records through RLS.');
+assert.doesNotMatch(schema, /create policy (?:groups_staff_manage|students_staff_manage)[\s\S]*?p\.role in \('owner','admin','teacher'\)/, 'Teachers must not receive broad student/group write access.');
 
 console.log('Static quality checks passed.');
