@@ -3,14 +3,21 @@ function todayISO(){return new Date().toISOString().slice(0,10)}
 const initial={students:[],teachers:[],groups:[],payments:[],expenses:[],attendance:[],lessons:[],homework:[],assessments:[],results:[]};
 function cleanDemoRecords(data){
  const clean={...data};
- const sampleStudents=new Set(['Amina Karimova','Sardor Aliyev','Madina Rustamova','Jasur Tursunov']);
- const sampleTeachers=new Set(['Dilnoza Ahmedova','Bekzod Karimov']);
- const sampleExpenses=new Set(['Center rent','Internet and utilities','Administrator salary']);
- clean.students=(clean.students||[]).filter(x=>!sampleStudents.has(x.name));
- clean.teachers=(clean.teachers||[]).filter(x=>!sampleTeachers.has(x.name));
- clean.payments=(clean.payments||[]).filter(x=>!sampleStudents.has(x.student));
- clean.expenses=(clean.expenses||[]).filter(x=>!sampleExpenses.has(x.title));
- clean.groups=(clean.groups||[]).filter(x=>!(Number(x.id)<=3&&['English B1','Mathematics','Biology'].includes(x.name)&&['Dilnoza Ahmedova','Bekzod Karimov','To be assigned'].includes(x.teacher)));
+ const sampleStudents=[
+  [1,'Amina Karimova','+998 90 123 45 67','English B1'],
+  [2,'Sardor Aliyev','+998 91 234 56 78','Mathematics'],
+  [3,'Madina Rustamova','+998 93 345 67 89','Biology'],
+  [4,'Jasur Tursunov','+998 95 456 78 90','English A2']
+ ];
+ const sampleTeachers=[[1,'Dilnoza Ahmedova','English','+998 90 111 22 33'],[2,'Bekzod Karimov','Mathematics','+998 91 222 33 44']];
+ const sampleExpenses=[[1,'Center rent','Rent',3000000],[2,'Internet and utilities','Utilities',1000000],[3,'Administrator salary','Salary',1300000]];
+ const samplePayments=[[1,'Amina Karimova','English B1',230000,'Cash','Paid'],[2,'Sardor Aliyev','Mathematics',230000,'Card','Paid'],[3,'Madina Rustamova','Biology',230000,'Cash','Pending']];
+ const matches=(x,row,fields)=>fields.every((field,i)=>String(x[field]??'')===String(row[i]));
+ clean.students=(clean.students||[]).filter(x=>!sampleStudents.some(r=>matches(x,r,['id','name','phone','group'])));
+ clean.teachers=(clean.teachers||[]).filter(x=>!sampleTeachers.some(r=>matches(x,r,['id','name','subject','phone'])));
+ clean.payments=(clean.payments||[]).filter(x=>!samplePayments.some(r=>matches(x,r,['id','student','group','amount','method','status'])));
+ clean.expenses=(clean.expenses||[]).filter(x=>!sampleExpenses.some(r=>matches(x,r,['id','title','category','amount'])));
+ clean.groups=(clean.groups||[]).filter(x=>!(Number(x.id)<=3&&['English B1','Mathematics','Biology'].includes(x.name)&&['Dilnoza Ahmedova','Bekzod Karimov','To be assigned'].includes(x.teacher)&&Number(x.fee)===230000));
  return clean;
 }
 let db;try{const saved=JSON.parse(localStorage.getItem(STORE));db=cleanDemoRecords({...structuredClone(initial),...(saved&&typeof saved==='object'?saved:{})});for(const key of Object.keys(initial)){if(!Array.isArray(db[key]))db[key]=structuredClone(initial[key])}localStorage.setItem(STORE,JSON.stringify(db))}catch{db=structuredClone(initial)}
