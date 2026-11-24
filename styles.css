@@ -816,3 +816,35 @@ body:has(.command-hero) .page-heading .primary-btn{
 /* Keyboard- and touch-friendly horizontal table scrolling */
 .table-wrap{max-width:100%;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
 .table-wrap:focus-visible{outline:3px solid #9b91ff;outline-offset:3px}
+
+
+/* Form usability: consistent touch targets and resilient narrow-screen layouts */
+.field input,.field select,.settings-form input,.staff-form input,.staff-form select,
+.search,.select{
+ min-height:44px;
+}
+.field input[type="color"],.settings-form input[type="color"]{
+ min-height:44px;
+ height:44px;
+}
+.modal-actions{flex-wrap:wrap}
+.form-grid,.settings-form,.staff-form,.parent-invite-form,.test-builder{
+ min-width:0;
+}
+.form-grid>.field,.settings-form>.field,.staff-form>.field,.parent-invite-form>.field,.test-builder>.field{
+ min-width:0;
+}
+@media(max-width:640px){
+ .modal form{padding:18px}
+ .modal-actions{display:grid;grid-template-columns:1fr 1fr}
+ .modal-actions button{min-height:44px;justify-content:center}
+ .test-builder>.primary-btn,
+ .settings-form>.field.full .primary-btn,
+ .staff-form>.primary-btn,
+ .parent-invite-form>.primary-btn,
+ #liveExamForm>.primary-btn{
+  width:100%;min-height:46px;justify-content:center;white-space:normal;
+ }
+ .toolbar{align-items:stretch}
+ .toolbar .search,.toolbar .select,.toolbar button{min-height:44px}
+}
