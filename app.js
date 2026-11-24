@@ -78,7 +78,7 @@ function persist(){
 }
 function notify(s){const t=document.querySelector('#toast');t.textContent=s;t.classList.add('show');clearTimeout(timer);timer=setTimeout(()=>t.classList.remove('show'),2400)}
 function stat(label,val,icon,foot){return '<article class="stat-card"><div class="stat-top">'+label+'<span class="stat-icon">'+icon+'</span></div><div class="stat-value">'+val+'</div><div class="stat-foot">'+foot+'</div></article>'}
-function table(headers,rows){return '<div class="table-wrap"><table><thead><tr>'+headers.map(x=>'<th>'+x+'</th>').join('')+'</tr></thead><tbody>'+rows+'</tbody></table></div>'}
+function table(headers,rows){const label='Scrollable table: '+headers.map(x=>String(x)).join(', ');return '<div class="table-wrap" role="region" tabindex="0" aria-label="'+esc(label)+'"><table><thead><tr>'+headers.map(x=>'<th>'+x+'</th>').join('')+'</tr></thead><tbody>'+rows+'</tbody></table></div>'}
 function person(n){return '<div class="student-cell"><span class="mini-avatar">'+initials(n)+'</span>'+esc(n)+'</div>'}
 
 function analyticsPanel(){
