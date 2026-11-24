@@ -20,6 +20,7 @@
   el.innerHTML='<div class="avatar">'+(profile.full_name||'U').split(' ').map(x=>x[0]).slice(0,2).join('').toUpperCase()+'</div><div><strong>'+profile.full_name+'</strong><small>'+label+'</small></div><button id="signOutBtn">Sign out</button>';
   document.getElementById('signOutBtn').onclick=async()=>{await window.schoolSupabase.auth.signOut();location.reload()};
  }
+ function isMissingOptionalRelation(error){return ['42P01','PGRST205'].includes(error?.code)}
  async function loadParent(profile){
   const sb=window.schoolSupabase;
   const links=await sb.from('parent_student_links').select('student_id').eq('parent_user_id',(await sb.auth.getUser()).data.user.id);
@@ -32,8 +33,11 @@
    sb.from('student_homework').select('id,student_id,title,description,due_date,assigned_by').in('student_id',ids).order('due_date',{ascending:true}).limit(100),
    sb.from('student_results').select('id,student_id,assessment,score,max_score,assessment_date,feedback').in('student_id',ids).order('assessment_date',{ascending:false}).limit(100)
   ]);
-  if(students.error)throw students.error;if(attendance.error)throw attendance.error;if(homework.error)throw homework.error;if(results.error)throw results.error;
-  window.schoolApp.showParentPortal(students.data||[],attendance.data||[],profile,homework.data||[],results.data||[]);
+  if(students.error)throw students.error;if(attendance.error)throw attendance.error;
+  if(homework.error&&!isMissingOptionalRelation(homework.error))throw homework.error;
+  if(results.error&&!isMissingOptionalRelation(results.error))throw results.error;
+  if(homework.error||results.error)console.warn('Optional parent portal tables are not fully configured; attendance remains available.');
+  window.schoolApp.showParentPortal(students.data||[],attendance.data||[],profile,homework.error?[]:(homework.data||[]),results.error?[]:(results.data||[]));
   if(window.schoolCloud.realtimeChannel)await sb.removeChannel(window.schoolCloud.realtimeChannel);
   const channel=sb.channel('parent-attendance-'+profile.school_id).on('postgres_changes',{event:'*',schema:'public',table:'attendance_records',filter:'school_id=eq.'+profile.school_id},async()=>{try{await loadParent(profile)}catch(e){console.error('Attendance refresh failed',e)}}).subscribe();
   window.schoolCloud.realtimeChannel=channel;
