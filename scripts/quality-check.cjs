@@ -30,5 +30,8 @@ assert.match(app, /Attendance saved to the school cloud\./, 'Cloud attendance su
 assert.match(app, /canMarkAttendance=!window\.schoolCloud\|\|\['owner','admin','teacher'\]\.includes\(role\)/, 'Teachers must be allowed to mark attendance for their assigned groups.');
 assert.match(cloud, /from\('attendance_records'\)\.upsert\(rows,\{onConflict:'student_id,attendance_date'\}\)/, 'Attendance must upsert by the student/date key.');
 assert.match(cloud, /\.eq\('school_id',profile\.school_id\)/, 'Attendance cloud operations must be school scoped.');
+assert.match(cloud, /function isMissingOptionalRelation\(error\)/, 'Optional parent portal tables must not block attendance when they are not provisioned.');
+assert.match(cloud, /homework\.error&&!isMissingOptionalRelation\(homework\.error\)/, 'Unexpected homework query errors must remain visible.');
+assert.match(cloud, /results\.error&&!isMissingOptionalRelation\(results\.error\)/, 'Unexpected results query errors must remain visible.');
 
 console.log('Static quality checks passed.');
