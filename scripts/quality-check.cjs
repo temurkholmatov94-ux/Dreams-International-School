@@ -46,7 +46,7 @@ assert.match(schema, /revoke truncate, references, trigger on table public\.stud
 
 assert.match(app, /const canAdd=type=>admin\|\|\(teacher&&\['results','homework'\]\.includes\(type\)\)/, 'Teachers must not create or edit student/group master data.');
 assert.match(app, /const canRemove=type=>admin\|\|\(accountant&&\['payments','expenses'\]\.includes\(type\)\)/, 'Teacher record deletion controls must remain disabled.');
-assert.match(cloud, /if\(profile\.role==='teacher'\)\{[\s\S]*?academicPayload=\{\.\.\.current,attendance:academicPayload\.attendance/, 'Teacher saves must preserve owner-managed student and group workspace data.');
+assert.ok(!cloud.includes('academicPayload={...current,attendance:'), 'Teachers must not overwrite the shared school academic workspace.');
 assert.match(cloud, /if\(\['owner','admin'\]\.includes\(profile\.role\)\)\{[\s\S]*?const localGroups=/, 'Only owners and admins may sync student/group master data.');
 
 assert.ok(schema.includes('student_homework_student_school_fk') && schema.includes('foreign key (school_id, student_id)'), 'Homework must reference a student in the same school.');
