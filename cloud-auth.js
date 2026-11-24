@@ -169,6 +169,14 @@
     if(profile.role==='accountant')return;
     if(['owner','admin'].includes(profile.role)){
     const localTeachers=(payload.teachers||[]).map(t=>({school_id:profile.school_id,external_id:String(t.id),full_name:String(t.name||'').trim(),subject:t.subject||null,phone:t.phone||null,monthly_salary:Number(t.salary)||0,status:t.status||'Active'})).filter(t=>t.full_name);
+    const previousTeachers=await sb.from('teachers').select('id,external_id,full_name').eq('school_id',profile.school_id);
+    if(previousTeachers.error)throw previousTeachers.error;
+    const oldNameByExternal=new Map((previousTeachers.data||[]).map(t=>[String(t.external_id),t.full_name]));
+    const renamedTeacherNames=new Map();
+    for(const teacher of localTeachers){
+     const oldName=oldNameByExternal.get(String(teacher.external_id));
+     if(oldName&&oldName!==teacher.full_name)renamedTeacherNames.set(oldName,teacher.full_name);
+    }
     if(localTeachers.length){
      const up=await sb.from('teachers').upsert(localTeachers,{onConflict:'school_id,external_id'});
      if(up.error)throw up.error;
@@ -176,7 +184,10 @@
     const teacherRows=await sb.from('teachers').select('id,external_id,full_name').eq('school_id',profile.school_id);
     if(teacherRows.error)throw teacherRows.error;
     const teacherIdByName=new Map((teacherRows.data||[]).map(t=>[t.full_name,t.id]));
-    const localGroups=(payload.groups||[]).map(g=>({school_id:profile.school_id,external_id:String(g.id),name:String(g.name||'').trim(),subject:g.subject||null,teacher_name:g.teacher||null,teacher_id:teacherIdByName.get(g.teacher)||null,schedule:g.schedule||null,monthly_fee:Number(g.fee)||0})).filter(g=>g.name);
+    const localGroups=(payload.groups||[]).map(g=>{
+     const teacherName=renamedTeacherNames.get(g.teacher)||g.teacher||null;
+     return {school_id:profile.school_id,external_id:String(g.id),name:String(g.name||'').trim(),subject:g.subject||null,teacher_name:teacherName,teacher_id:teacherIdByName.get(teacherName)||null,schedule:g.schedule||null,monthly_fee:Number(g.fee)||0};
+    }).filter(g=>g.name);
     if(localGroups.length){
      const up=await sb.from('school_groups').upsert(localGroups,{onConflict:'school_id,external_id'});
      if(up.error)throw up.error;
