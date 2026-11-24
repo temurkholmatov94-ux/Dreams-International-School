@@ -416,7 +416,8 @@ function render(){
  if(page==='reports')loadAdvancedAnalytics();
  if(window.schoolApp)window.schoolApp.applyPermissions();
 }
-function go(p){page=p;render();document.querySelector('#sidebar').classList.remove('open')}
+function closeMobileNavigation(){const sidebar=document.querySelector('#sidebar'),menu=document.querySelector('#mobileMenu');sidebar.classList.remove('open');menu.setAttribute('aria-expanded','false');menu.setAttribute('aria-label','Open navigation menu')}
+function go(p){page=p;render();closeMobileNavigation()}
 // Robust delegated navigation: keeps sidebar links working after every render.
 document.addEventListener('click',e=>{const nav=e.target.closest('.nav-item[data-page], [data-page]:not(.nav-item)');if(!nav)return;e.preventDefault();go(nav.dataset.page)},{capture:true});
 
@@ -510,7 +511,8 @@ document.querySelector('#quickAdd').addEventListener('click',()=>{const target=(
 document.querySelector('#closeModal').addEventListener('click',()=>document.querySelector('#recordDialog').close());
 document.querySelector('#cancelModal').addEventListener('click',()=>document.querySelector('#recordDialog').close());
 
-document.querySelector('#mobileMenu').addEventListener('click',()=>document.querySelector('#sidebar').classList.toggle('open'));
+document.querySelector('#mobileMenu').addEventListener('click',()=>{const sidebar=document.querySelector('#sidebar'),menu=document.querySelector('#mobileMenu'),isOpen=sidebar.classList.toggle('open');menu.setAttribute('aria-expanded',String(isOpen));menu.setAttribute('aria-label',isOpen?'Close navigation menu':'Open navigation menu')});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeMobileNavigation()});
 document.querySelector('#todayDate').textContent=new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'});
 document.querySelector('#year').textContent=new Date().getFullYear();
 render();
