@@ -90,7 +90,7 @@
      if(removed.error)throw removed.error;
      return;
     }
-    const tableTargets={students:['students','external_id'],groups:['school_groups','external_id'],results:['student_results','external_id']};
+    const tableTargets={students:['students','external_id'],groups:['school_groups','external_id'],teachers:['teachers','external_id'],results:['student_results','external_id']};
     if(tableTargets[type]){
      if(!['owner','admin'].includes(profile.role))throw new Error('Only school administrators can remove this record.');
      const [table,key]=tableTargets[type];
@@ -168,7 +168,15 @@
     }
     if(profile.role==='accountant')return;
     if(['owner','admin'].includes(profile.role)){
-    const localGroups=(payload.groups||[]).map(g=>({school_id:profile.school_id,external_id:String(g.id),name:String(g.name||'').trim(),subject:g.subject||null,teacher_name:g.teacher||null,schedule:g.schedule||null,monthly_fee:Number(g.fee)||0})).filter(g=>g.name);
+    const localTeachers=(payload.teachers||[]).map(t=>({school_id:profile.school_id,external_id:String(t.id),full_name:String(t.name||'').trim(),subject:t.subject||null,phone:t.phone||null,monthly_salary:Number(t.salary)||0,status:t.status||'Active'})).filter(t=>t.full_name);
+    if(localTeachers.length){
+     const up=await sb.from('teachers').upsert(localTeachers,{onConflict:'school_id,external_id'});
+     if(up.error)throw up.error;
+    }
+    const teacherRows=await sb.from('teachers').select('id,external_id,full_name').eq('school_id',profile.school_id);
+    if(teacherRows.error)throw teacherRows.error;
+    const teacherIdByName=new Map((teacherRows.data||[]).map(t=>[t.full_name,t.id]));
+    const localGroups=(payload.groups||[]).map(g=>({school_id:profile.school_id,external_id:String(g.id),name:String(g.name||'').trim(),subject:g.subject||null,teacher_name:g.teacher||null,teacher_id:teacherIdByName.get(g.teacher)||null,schedule:g.schedule||null,monthly_fee:Number(g.fee)||0})).filter(g=>g.name);
     if(localGroups.length){
      const up=await sb.from('school_groups').upsert(localGroups,{onConflict:'school_id,external_id'});
      if(up.error)throw up.error;
@@ -212,9 +220,12 @@
      sb.from('attendance_records').select('student_id,attendance_date,status,note,students!attendance_records_student_school_fk!inner(external_id,full_name)').eq('school_id',profile.school_id).order('attendance_date',{ascending:false}).limit(5000)
     ]);
     for(const r of [students,groups,attendance])if(r.error)throw r.error;
+    const teachers=['owner','admin'].includes(profile.role)?await sb.from('teachers').select('external_id,full_name,subject,phone,monthly_salary,status').eq('school_id',profile.school_id).order('full_name'):{data:[],error:null};
+    if(teachers.error)throw teachers.error;
     return {
      students:(students.data||[]).map(s=>({id:s.external_id,name:s.full_name,phone:s.phone||'',group:s.group_name||'',fee:Number(s.monthly_fee)||0,status:s.status||'Active'})),
      groups:(groups.data||[]).map(g=>({id:g.external_id,name:g.name,subject:g.subject||'',teacher:g.teacher_name||'',schedule:g.schedule||'',fee:Number(g.monthly_fee)||0})),
+     teachers:(teachers.data||[]).map(t=>({id:t.external_id,name:t.full_name,subject:t.subject||'',phone:t.phone||'',salary:Number(t.monthly_salary)||0,status:t.status||'Active'})),
      attendance:(attendance.data||[]).map(r=>({student:r.students?.full_name||'',studentId:r.students?.external_id||null,date:r.attendance_date,status:r.status}))
     };
    },
