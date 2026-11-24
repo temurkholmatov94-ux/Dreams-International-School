@@ -49,7 +49,7 @@
  async function start(){
   const sessionResult=await window.schoolSupabase.auth.getSession(),session=sessionResult.data.session;
   if(!session){showGate('Sign in to access your school or family portal.');return}
-  const p=await window.schoolSupabase.from('school_profiles').select('school_id,full_name,role').eq('user_id',session.user.id).single();
+  const p=await window.schoolSupabase.from('school_profiles').select('school_id,full_name,role,teacher_id').eq('user_id',session.user.id).single();
   if(p.error||!p.data){await window.schoolSupabase.auth.signOut();showGate('Your account has no school profile. Ask the school owner to set up your access.');return}
   const profile=p.data,sb=window.schoolSupabase;
   const schoolResult=await sb.from('schools').select('id,name,slug,logo_url,contact_email,contact_phone,address,website,primary_color,plan,subscription_status').eq('id',profile.school_id).single();
@@ -239,21 +239,25 @@
    },
    refreshSharedRecords:async()=>{
     if(!['owner','admin','teacher','accountant'].includes(profile.role))return;
-    const [students,groups,attendance,timetableRows]=await Promise.all([
+    const [students,groups,attendance,timetableRows,homeworkRows,resultRows]=await Promise.all([
      sb.from('students').select('external_id,full_name,phone,group_name,monthly_fee,status').eq('school_id',profile.school_id).order('full_name'),
      sb.from('school_groups').select('external_id,name,subject,teacher_name,schedule,monthly_fee').eq('school_id',profile.school_id).order('name'),
      sb.from('attendance_records').select('student_id,attendance_date,status,note,students!attendance_records_student_school_fk!inner(external_id,full_name)').eq('school_id',profile.school_id).order('attendance_date',{ascending:false}).limit(5000),
-     sb.from('class_timetable').select('external_id,weekday,starts_at,ends_at,room,effective_from,effective_until,status,group:school_groups!class_timetable_group_school_fk(name),teacher:teachers!class_timetable_teacher_school_fk(full_name)').eq('school_id',profile.school_id).order('weekday').order('starts_at')
+     sb.from('class_timetable').select('external_id,weekday,starts_at,ends_at,room,effective_from,effective_until,status,group:school_groups!class_timetable_group_school_fk(name),teacher:teachers!class_timetable_teacher_school_fk(full_name)').eq('school_id',profile.school_id).order('weekday').order('starts_at'),
+     sb.from('student_homework').select('external_id,title,description,due_date,assigned_by,student:students!student_homework_student_school_fk!inner(external_id,full_name,group_name)').eq('school_id',profile.school_id).order('due_date',{ascending:true}),
+     sb.from('student_results').select('external_id,assessment,score,max_score,assessment_date,feedback,student:students!student_results_student_school_fk!inner(external_id,full_name,group_name)').eq('school_id',profile.school_id).order('assessment_date',{ascending:false})
     ]);
-    for(const r of [students,groups,attendance,timetableRows])if(r.error)throw r.error;
-    const teachers=['owner','admin'].includes(profile.role)?await sb.from('teachers').select('external_id,full_name,subject,phone,monthly_salary,status').eq('school_id',profile.school_id).order('full_name'):{data:[],error:null};
+    for(const r of [students,groups,attendance,timetableRows,homeworkRows,resultRows])if(r.error)throw r.error;
+    const teachers=['owner','admin'].includes(profile.role)?await sb.from('teachers').select('id,external_id,full_name,subject,phone,monthly_salary,status').eq('school_id',profile.school_id).order('full_name'):profile.role==='teacher'?await sb.from('teachers').select('id,external_id,full_name,subject,phone,monthly_salary,status').eq('school_id',profile.school_id).eq('id',profile.teacher_id):{data:[],error:null};
     if(teachers.error)throw teachers.error;
     return {
      students:(students.data||[]).map(s=>({id:s.external_id,name:s.full_name,phone:s.phone||'',group:s.group_name||'',fee:Number(s.monthly_fee)||0,status:s.status||'Active'})),
      groups:(groups.data||[]).map(g=>({id:g.external_id,name:g.name,subject:g.subject||'',teacher:g.teacher_name||'',schedule:g.schedule||'',fee:Number(g.monthly_fee)||0})),
-     teachers:(teachers.data||[]).map(t=>({id:t.external_id,name:t.full_name,subject:t.subject||'',phone:t.phone||'',salary:Number(t.monthly_salary)||0,status:t.status||'Active'})),
+     teachers:(teachers.data||[]).map(t=>({id:t.external_id,cloud_id:t.id,name:t.full_name,subject:t.subject||'',phone:t.phone||'',salary:Number(t.monthly_salary)||0,status:t.status||'Active'})),
      attendance:(attendance.data||[]).map(r=>({student:r.students?.full_name||'',studentId:r.students?.external_id||null,date:r.attendance_date,status:r.status})),
-     timetable:(timetableRows.data||[]).map(r=>({id:r.external_id,weekday:r.weekday,starts_at:String(r.starts_at).slice(0,5),ends_at:String(r.ends_at).slice(0,5),room:r.room||'',effective_from:r.effective_from,effective_until:r.effective_until||'',status:r.status,group:r.group?.name||'',teacher:r.teacher?.full_name||''}))
+     timetable:(timetableRows.data||[]).map(r=>({id:r.external_id,weekday:r.weekday,starts_at:String(r.starts_at).slice(0,5),ends_at:String(r.ends_at).slice(0,5),room:r.room||'',effective_from:r.effective_from,effective_until:r.effective_until||'',status:r.status,group:r.group?.name||'',teacher:r.teacher?.full_name||''})),
+     homework:(homeworkRows.data||[]).map(r=>({id:r.external_id,title:r.title,description:r.description||'',due_date:r.due_date,teacher:r.assigned_by||'',student:r.student?.full_name||'',studentId:r.student?.external_id||'',group:r.student?.group_name||''})),
+     results:(resultRows.data||[]).map(r=>({id:r.external_id,assessment:r.assessment,score:Number(r.score)||0,max_score:Number(r.max_score)||100,date:r.assessment_date,feedback:r.feedback||'',student:r.student?.full_name||'',studentId:r.student?.external_id||'',group:r.student?.group_name||''}))
     };
    },
   };
@@ -264,6 +268,7 @@
   const screen=document.getElementById('authScreen');if(screen)screen.remove();profileUi(profile);
   if(profile.role==='parent'){await loadParent(profile);return}
   if(d.data?.payload&&Object.keys(d.data.payload).length&&window.schoolApp)window.schoolApp.setData(d.data.payload);
+  if(profile.role==='teacher'&&window.schoolApp)window.schoolApp.setData({});
   if(profile.role!=='parent'&&window.schoolCloud.refreshSharedRecords){
    try{const shared=await window.schoolCloud.refreshSharedRecords();window.schoolApp?.mergeSharedData(shared)}catch(e){console.error('Shared records refresh failed:',e?.message||e,e)}
    if(['owner','admin','accountant'].includes(profile.role)){try{const finance=await window.schoolCloud.getFinanceTransactions();window.schoolApp?.mergeFinanceData(finance)}catch(e){console.error('Finance records refresh failed:',e)}}
@@ -272,6 +277,9 @@
     .on('postgres_changes',{event:'*',schema:'public',table:'students',filter:'school_id=eq.'+profile.school_id},refreshSharedRecordsSafely)
     .on('postgres_changes',{event:'*',schema:'public',table:'school_groups',filter:'school_id=eq.'+profile.school_id},refreshSharedRecordsSafely)
     .on('postgres_changes',{event:'*',schema:'public',table:'attendance_records',filter:'school_id=eq.'+profile.school_id},refreshSharedRecordsSafely)
+    .on('postgres_changes',{event:'*',schema:'public',table:'class_timetable',filter:'school_id=eq.'+profile.school_id},refreshSharedRecordsSafely)
+    .on('postgres_changes',{event:'*',schema:'public',table:'student_homework',filter:'school_id=eq.'+profile.school_id},refreshSharedRecordsSafely)
+    .on('postgres_changes',{event:'*',schema:'public',table:'student_results',filter:'school_id=eq.'+profile.school_id},refreshSharedRecordsSafely)
     .on('postgres_changes',{event:'*',schema:'public',table:'finance_transactions',filter:'school_id=eq.'+profile.school_id},refreshFinanceSafely)
     .subscribe();
   }
@@ -279,7 +287,7 @@
    const nav=document.querySelector('.nav');if(nav&&!nav.querySelector('[data-page="parents"]')){const b=document.createElement('button');b.className='nav-item';b.dataset.page='parents';b.innerHTML='<span>♧</span>Parent access';const attendance=nav.querySelector('[data-page="attendance"]');attendance?.after(b)}
   }else{document.querySelector('[data-page="parents"]')?.remove()}
   if(!window.schoolCloud.canManage&&profile.role!=='accountant'){const note=document.createElement('div');note.className='readonly-note';note.textContent='Read-only access: your account can view school records.';const content=document.querySelector('.content');if(content)content.insertBefore(note,content.children[1]||null)}else if(profile.role==='accountant'){const note=document.createElement('div');note.className='readonly-note';note.textContent='Finance access: you can manage payments and expenses. Other school records are read-only.';const content=document.querySelector('.content');if(content)content.insertBefore(note,content.children[1]||null)}
-  if(window.schoolApp)window.schoolApp.applyPermissions();
+  if(window.schoolApp){if(profile.role==='teacher')window.schoolApp.showTeacherPortal();else window.schoolApp.applyPermissions();}
  }
  window.addEventListener('DOMContentLoaded',async()=>{
   if(!configured){const note=document.createElement('div');note.className='mode-note';note.textContent='Preview mode: changes are saved only in this browser. Connect Supabase to enable secure accounts and shared records.';const content=document.querySelector('.content');if(content)content.insertBefore(note,content.children[1]||null);return}
