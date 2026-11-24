@@ -450,10 +450,11 @@ let modalType='',editingRecordId=null;
 function renderRecordFields(type,record={}){
  return fieldsFor(type).map(f=>{
   const value=record[f.name]??f.value??'';
-  const label='<label>'+esc(f.label)+'</label>';
+  const fieldId='record-'+type+'-'+f.name;
+  const label='<label for="'+fieldId+'">'+esc(f.label)+'</label>';
   const control=f.kind==='select'
-   ?'<select name="'+f.name+'" '+(!f.opts.length?'disabled':'')+'>'+[...new Set([...f.opts,...(value!==''?[String(value)]:[])])].map(o=>'<option value="'+esc(o)+'" '+(String(o)===String(value)?'selected':'')+'>'+esc(o)+'</option>').join('')+'</select>'
-   :'<input name="'+f.name+'" type="'+f.kind+'" '+(value!==''?'value="'+esc(value)+'"':'')+(f.name==='salary'?' min="0" step="1"':'')+' required>';
+   ?'<select id="'+fieldId+'" name="'+f.name+'" '+(!f.opts.length?'disabled':'')+'>'+[...new Set([...f.opts,...(value!==''?[String(value)]:[])])].map(o=>'<option value="'+esc(o)+'" '+(String(o)===String(value)?'selected':'')+'>'+esc(o)+'</option>').join('')+'</select>'
+   :'<input id="'+fieldId+'" name="'+f.name+'" type="'+f.kind+'" '+(value!==''?'value="'+esc(value)+'"':'')+(f.name==='salary'?' min="0" step="1"':'')+' required>';
   return '<div class="field '+(f.name==='name'?'full':'')+'">'+label+control+'</div>';
  }).join('');
 }
