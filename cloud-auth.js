@@ -208,7 +208,6 @@
      // homework or finance changes from being saved.
      const current=await sb.from('class_timetable').select('external_id,weekday,starts_at,ends_at,room,effective_from,effective_until,status,teacher_id,group_id').eq('school_id',profile.school_id);
      if(current.error)throw current.error;
-     const incomingIds=new Set(timetableRows.map(r=>String(r.external_id)));
      const accepted=[];
      const overlaps=(a,b)=>{
       if(a.status!=='Scheduled'||b.status!=='Scheduled'||Number(a.weekday)!==Number(b.weekday))return false;
@@ -218,9 +217,9 @@
       const sameRoom=a.room&&b.room&&String(a.room).trim()&&String(b.room).trim()&&String(a.room).trim().toLowerCase()===String(b.room).trim().toLowerCase();
       return a.teacher_id===b.teacher_id||a.group_id===b.group_id||sameRoom;
      };
-     const existing=(current.data||[]).filter(r=>!incomingIds.has(String(r.external_id)));
+     const existing=current.data||[];
      for(const row of timetableRows){
-      if(existing.some(r=>overlaps(row,r))||accepted.some(r=>overlaps(row,r))){
+      if(existing.some(r=>String(r.external_id)!==String(row.external_id)&&overlaps(row,r))||accepted.some(r=>overlaps(row,r))){
        console.warn('Skipped conflicting legacy timetable entry:',row.external_id);
        continue;
       }
