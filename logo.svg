@@ -1,10 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-<g fill="#fff">
-<path d="M256 18 184 142H30l111 114L30 370h154l72 124 72-124h154L371 256l111-114H328z"/>
-<circle cx="128" cy="62" r="25"/><circle cx="384" cy="62" r="25"/>
-<circle cx="34" cy="256" r="25"/><circle cx="478" cy="256" r="25"/>
-<circle cx="128" cy="450" r="25"/><circle cx="384" cy="450" r="25"/>
-</g>
-<path d="M256 18 184 142H30l111 114L30 370h154l72 124 72-124h154L371 256l111-114H328z" fill="none" stroke="#fff" stroke-width="2" opacity=".18"/>
+<path fill="#fff" fill-rule="evenodd" d="M256 18 328 142H482L371 256 482 370H328L256 494 184 370H30L141 256 30 142H184Z M256 132 217 205H104L180 256 104 307H217L256 380 295 307H408L332 256 408 205H295Z"/>
+<g fill="#fff"><circle cx="128" cy="62" r="25"/><circle cx="384" cy="62" r="25"/><circle cx="34" cy="256" r="25"/><circle cx="478" cy="256" r="25"/><circle cx="128" cy="450" r="25"/><circle cx="384" cy="450" r="25"/></g>
 <text x="256" y="294" fill="#fff" font-family="Georgia,'Times New Roman',serif" font-size="106" font-weight="700" text-anchor="middle" letter-spacing="2">DIS</text>
 </svg>
