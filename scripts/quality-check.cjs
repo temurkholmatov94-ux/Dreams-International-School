@@ -8,7 +8,7 @@ const cloud = read('cloud-auth.js');
 const config = read('supabase-config.js');
 
 assert.match(html, /<html[^>]+lang="uz"/, 'The interface document language must be Uzbek.');
-assert.match(html, /rel="icon"[^>]+favicon\\.svg/, 'The branded favicon must be linked.');
+assert.match(html, /rel="icon"[^>]*href="favicon\\.svg"/, 'The branded favicon must be linked.');
 assert.match(app, /const initial=\\{students:\\[\\],teachers:\\[\\],groups:\\[\\],payments:\\[\\],expenses:\\[\\]/, 'The application must not seed fake school records.');
 assert.match(app, /function cleanDemoRecords\\(data\\)/, 'Legacy demo-data cleanup must be available.');
 assert.match(app, /matches\\(x,r,\\['id','name','phone','group'\\]\\)/, 'Student cleanup must match full seeded record signatures, not names alone.');
