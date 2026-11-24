@@ -1,6 +1,6 @@
 const STORE='dreams-school-v1';
 function todayISO(){return new Date().toISOString().slice(0,10)}
-const initial={students:[],teachers:[],groups:[],timetable:[],payments:[],expenses:[],attendance:[],lessons:[],homework:[],assessments:[],results:[]};
+const initial={students:[],teachers:[],groups:[],payments:[],expenses:[],attendance:[],lessons:[],homework:[],assessments:[],results:[],timetable:[]};
 function cleanDemoRecords(data){
  const clean={...data};
  const sampleStudents=[
