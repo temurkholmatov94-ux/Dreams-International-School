@@ -49,8 +49,8 @@ assert.match(app, /const canRemove=type=>admin\|\|\(accountant&&\['payments','ex
 assert.match(cloud, /if\(profile\.role==='teacher'\)\{[\s\S]*?academicPayload=\{\.\.\.current,attendance:academicPayload\.attendance/, 'Teacher saves must preserve owner-managed student and group workspace data.');
 assert.match(cloud, /if\(\['owner','admin'\]\.includes\(profile\.role\)\)\{[\s\S]*?const localGroups=/, 'Only owners and admins may sync student/group master data.');
 
-assert.ok(schema.includes('student_homework_student_school_fk') && schema.includes('foreign key (school_id,student_id)'), 'Homework must reference a student in the same school.');
-assert.ok(schema.includes('student_results_student_school_fk') && schema.includes('foreign key (school_id,student_id)'), 'Results must reference a student in the same school.');
+assert.ok(schema.includes('student_homework_student_school_fk') && schema.includes('foreign key (school_id, student_id)'), 'Homework must reference a student in the same school.');
+assert.ok(schema.includes('student_results_student_school_fk') && schema.includes('foreign key (school_id, student_id)'), 'Results must reference a student in the same school.');
 assert.ok(schema.includes("attendance_records for select to authenticated using (") && schema.includes("p.role in ('owner','admin','teacher')"), 'Attendance reads must be limited to academic staff and linked parents.');
 assert.ok(schema.includes("student_homework for select to authenticated using (") && schema.includes("student_homework.school_id and p.role in ('owner','admin','teacher')"), 'Homework reads must be limited to academic staff and linked parents.');
 assert.ok(schema.includes("student_results for select to authenticated using (") && schema.includes("student_results.school_id and p.role in ('owner','admin','teacher')"), 'Result reads must be limited to academic staff and linked parents.');
