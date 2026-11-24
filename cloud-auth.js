@@ -161,8 +161,8 @@
     }
     if(['owner','admin','accountant'].includes(profile.role)){
      const financeRows=[
-      ...(payload.payments||[]).filter(x=>!(Number(x.id)<=3&&['Amina Karimova','Sardor Aliyev','Madina Rustamova'].includes(x.student))).map(x=>({school_id:profile.school_id,external_id:'payment:'+String(x.id),transaction_type:'tuition',student_name:x.student||null,group_name:x.group||null,title:'Tuition payment',amount:Number(x.amount)||0,transaction_date:x.date||new Date().toISOString().slice(0,10),payment_method:x.method||null,status:x.status||'Pending',billing_period:x.billing_period||null,created_by:session.user.id})),
-      ...(payload.expenses||[]).filter(x=>!(Number(x.id)<=3&&['Center rent','Internet and utilities','Administrator salary'].includes(x.title))).map(x=>({school_id:profile.school_id,external_id:'expense:'+String(x.id),transaction_type:'expense',title:x.title||'Expense',category:x.category||'Other',amount:Number(x.amount)||0,transaction_date:x.date||new Date().toISOString().slice(0,10),status:'Paid',created_by:session.user.id}))
+      ...(payload.payments||[]).map(x=>({school_id:profile.school_id,external_id:'payment:'+String(x.id),transaction_type:'tuition',student_name:x.student||null,group_name:x.group||null,title:'Tuition payment',amount:Number(x.amount)||0,transaction_date:x.date||new Date().toISOString().slice(0,10),payment_method:x.method||null,status:x.status||'Pending',billing_period:x.billing_period||null,created_by:session.user.id})),
+      ...(payload.expenses||[]).map(x=>({school_id:profile.school_id,external_id:'expense:'+String(x.id),transaction_type:'expense',title:x.title||'Expense',category:x.category||'Other',amount:Number(x.amount)||0,transaction_date:x.date||new Date().toISOString().slice(0,10),status:'Paid',created_by:session.user.id}))
      ];
      if(financeRows.length){const saved=await sb.from('finance_transactions').upsert(financeRows,{onConflict:'school_id,external_id'});if(saved.error)throw saved.error}
     }
@@ -220,9 +220,7 @@
    },
   };
   if(profile.role!=='parent'&&d.data?.payload){
-   const payload=d.data.payload;
-   const rows=(payload.students||[]).map(s=>({school_id:profile.school_id,external_id:String(s.id),full_name:s.name,phone:s.phone||null,group_name:s.group||null,monthly_fee:Number(s.fee)||0,status:s.status||'Active'}));
-   if(rows.length){const synced=await sb.from('students').upsert(rows,{onConflict:'school_id,external_id'});if(synced.error)console.error('Initial student sync failed:',synced.error)}
+   const payload=window.schoolApp?.setData(d.data.payload)||d.data.payload;
    await window.schoolCloud.save(payload);
   }
   const screen=document.getElementById('authScreen');if(screen)screen.remove();profileUi(profile);
