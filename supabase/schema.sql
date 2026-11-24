@@ -22,6 +22,7 @@ create index if not exists school_data_updated_by_idx on public.school_data(upda
 alter table public.school_profiles enable row level security;
 alter table public.school_data enable row level security;
 grant select on public.school_profiles to authenticated;
+revoke all on public.school_data from public, anon, authenticated;
 grant select, insert, update on public.school_data to authenticated;
 
 drop policy if exists school_profiles_read_own on public.school_profiles;
@@ -96,14 +97,14 @@ create table if not exists public.attendance_records (
   status text not null check (status in ('Present','Absent','Late','Excused')),
   note text, marked_by uuid references auth.users(id), created_at timestamptz not null default now(),
   unique (student_id,attendance_date),
-  foreign key (school_id,student_id) references public.students(school_id,id) on delete cascade
+  foreign key (school_id, student_id) references public.students(school_id, id) on delete cascade
 );
 create table if not exists public.parent_student_links (
   id uuid primary key default gen_random_uuid(), school_id uuid not null references public.schools(id) on delete cascade,
   parent_user_id uuid not null references auth.users(id) on delete cascade, student_id uuid not null,
   relationship text not null default 'Parent', created_at timestamptz not null default now(),
   unique (parent_user_id,student_id),
-  foreign key (school_id,student_id) references public.students(school_id,id) on delete cascade
+  foreign key (school_id, student_id) references public.students(school_id, id) on delete cascade
 );
 create index if not exists school_groups_school_idx on public.school_groups(school_id);
 create index if not exists students_school_idx on public.students(school_id);
@@ -128,7 +129,7 @@ using (exists(select 1 from public.school_profiles p where p.user_id=(select aut
 drop policy if exists groups_staff_manage on public.school_groups;
 create policy groups_staff_manage on public.school_groups for all to authenticated
 using (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=school_groups.school_id and p.role in ('owner','admin','teacher')))
-with check (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=school_groups.school_id and p.role in ('owner','admin','teacher')));
+with check (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=school_groups.school_id and p.role in ('owner','admin')));
 drop policy if exists students_school_or_parent_read on public.students;
 create policy students_school_or_parent_read on public.students for select to authenticated
 using (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=students.school_id and p.role in ('owner','admin','teacher','accountant'))
@@ -136,7 +137,7 @@ or exists(select 1 from public.parent_student_links l where l.student_id=student
 drop policy if exists students_staff_manage on public.students;
 create policy students_staff_manage on public.students for all to authenticated
 using (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=students.school_id and p.role in ('owner','admin','teacher')))
-with check (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=students.school_id and p.role in ('owner','admin','teacher')));
+with check (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=students.school_id and p.role in ('owner','admin')));
 drop policy if exists attendance_school_or_parent_read on public.attendance_records;
 create policy attendance_school_or_parent_read on public.attendance_records for select to authenticated
 using (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=attendance_records.school_id and p.role in ('owner','admin','teacher','accountant'))
@@ -144,7 +145,7 @@ or exists(select 1 from public.parent_student_links l where l.student_id=attenda
 drop policy if exists attendance_staff_manage on public.attendance_records;
 create policy attendance_staff_manage on public.attendance_records for all to authenticated
 using (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=attendance_records.school_id and p.role in ('owner','admin','teacher')))
-with check (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=attendance_records.school_id and p.role in ('owner','admin','teacher')));
+with check (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=attendance_records.school_id and p.role in ('owner','admin')));
 drop policy if exists parent_links_parent_or_staff_read on public.parent_student_links;
 create policy parent_links_parent_or_staff_read on public.parent_student_links for select to authenticated
 using (parent_user_id=(select auth.uid()) or exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=parent_student_links.school_id and p.role in ('owner','admin','teacher')));
@@ -153,7 +154,101 @@ create policy parent_links_staff_manage on public.parent_student_links for all t
 using (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=parent_student_links.school_id and p.role in ('owner','admin')))
 with check (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=parent_student_links.school_id and p.role in ('owner','admin')));
 
+-- Restrict finance table grants; RLS further scopes access by school and role.
+revoke all privileges on table public.finance_transactions from public, anon;
+revoke truncate, references, trigger on table public.finance_transactions from authenticated;
+grant select, insert, update on table public.finance_transactions to authenticated;
+revoke delete on table public.finance_transactions from public, anon, authenticated;
+
 -- Keep parent accounts out of the all-school JSON workspace.
 drop policy if exists school_data_read_school_members on public.school_data;
 create policy school_data_read_school_members on public.school_data for select to authenticated
-using (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=school_data.school_id and p.role in ('owner','admin','teacher','accountant')));
+using (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=school_data.school_id and p.role in ('owner','admin')));
+
+
+
+
+-- Separate academic workspace: teachers never receive finance or staff payloads.
+create table if not exists public.school_academic_data (
+  school_id uuid primary key references public.schools(id) on delete cascade,
+  payload jsonb not null default '{}'::jsonb,
+  updated_at timestamptz not null default now(),
+  updated_by uuid references auth.users(id)
+);
+alter table public.school_academic_data enable row level security;
+revoke all on public.school_academic_data from public, anon, authenticated;
+grant select, insert, update on public.school_academic_data to authenticated;
+revoke delete on public.school_data from anon, authenticated;
+drop policy if exists school_academic_read_staff on public.school_academic_data;
+create policy school_academic_read_staff on public.school_academic_data for select to authenticated
+using (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=school_academic_data.school_id and p.role in ('owner','admin','teacher')));
+drop policy if exists school_academic_write_admins on public.school_academic_data;
+create policy school_academic_write_admins on public.school_academic_data for insert to authenticated
+with check (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=school_academic_data.school_id and p.role in ('owner','admin')));
+drop policy if exists school_academic_update_admins on public.school_academic_data;
+create policy school_academic_update_admins on public.school_academic_data for update to authenticated
+using (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=school_academic_data.school_id and p.role in ('owner','admin')))
+with check (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=school_academic_data.school_id and p.role in ('owner','admin')));
+
+-- Restrict student and group master-data changes to school owners/admins.
+drop policy if exists students_staff_insert on public.students;
+drop policy if exists students_staff_update on public.students;
+drop policy if exists students_staff_delete on public.students;
+create policy students_admin_insert on public.students for insert to authenticated with check (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=students.school_id and p.role in ('owner','admin')));
+create policy students_admin_update on public.students for update to authenticated using (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=students.school_id and p.role in ('owner','admin'))) with check (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=students.school_id and p.role in ('owner','admin')));
+create policy students_admin_delete on public.students for delete to authenticated using (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=students.school_id and p.role in ('owner','admin')));
+drop policy if exists groups_staff_insert on public.school_groups;
+drop policy if exists groups_staff_update on public.school_groups;
+drop policy if exists groups_staff_delete on public.school_groups;
+create policy groups_admin_insert on public.school_groups for insert to authenticated with check (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=school_groups.school_id and p.role in ('owner','admin')));
+create policy groups_admin_update on public.school_groups for update to authenticated using (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=school_groups.school_id and p.role in ('owner','admin'))) with check (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=school_groups.school_id and p.role in ('owner','admin')));
+create policy groups_admin_delete on public.school_groups for delete to authenticated using (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=school_groups.school_id and p.role in ('owner','admin')));
+-- Preserve academic staff create/update access, but prevent hard deletion of records.
+drop policy if exists homework_staff_delete on public.student_homework;
+create policy homework_admin_delete on public.student_homework for delete to authenticated using (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=student_homework.school_id and p.role in ('owner','admin')));
+drop policy if exists results_staff_delete on public.student_results;
+create policy results_admin_delete on public.student_results for delete to authenticated using (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=student_results.school_id and p.role in ('owner','admin')));
+drop policy if exists attendance_staff_delete on public.attendance_records;
+create policy attendance_admin_delete on public.attendance_records for delete to authenticated using (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=attendance_records.school_id and p.role in ('owner','admin')));
+
+-- Remove legacy FOR ALL policies so they cannot override the stricter role-specific rules.
+drop policy if exists students_staff_manage on public.students;
+drop policy if exists groups_staff_manage on public.school_groups;
+drop policy if exists attendance_staff_manage on public.attendance_records;
+drop policy if exists homework_staff_manage on public.student_homework;
+drop policy if exists results_staff_manage on public.student_results;
+-- Remove default browser grants; RLS policies are the only authorization layer for authenticated users.
+revoke all privileges on table public.students, public.school_groups, public.attendance_records, public.student_homework, public.student_results, public.parent_student_links from public, anon;
+revoke truncate, references, trigger on table public.students, public.school_groups, public.attendance_records, public.student_homework, public.student_results, public.parent_student_links from authenticated;
+grant select, insert, update, delete on table public.students, public.school_groups, public.attendance_records, public.student_homework, public.student_results, public.parent_student_links to authenticated;
+revoke all privileges on table public.schools, public.school_profiles from public, anon;
+revoke insert, update, delete, truncate, references, trigger on table public.schools, public.school_profiles from authenticated;
+grant select on table public.schools, public.school_profiles to authenticated;
+
+
+-- Ensure academic records cannot point at a student in another school.
+do $$ begin
+ if not exists(select 1 from pg_constraint where conname='student_homework_student_school_fk') then
+  alter table public.student_homework add constraint student_homework_student_school_fk foreign key (school_id, student_id) references public.students(school_id, id) on delete cascade;
+ end if;
+ if not exists(select 1 from pg_constraint where conname='student_results_student_school_fk') then
+  alter table public.student_results add constraint student_results_student_school_fk foreign key (school_id, student_id) references public.students(school_id, id) on delete cascade;
+ end if;
+end $$;
+
+-- Accountants may view student/group details for billing, not attendance or academic performance.
+drop policy if exists attendance_school_or_parent_read on public.attendance_records;
+create policy attendance_school_or_parent_read on public.attendance_records for select to authenticated using (
+ exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=attendance_records.school_id and p.role in ('owner','admin','teacher'))
+ or exists(select 1 from public.parent_student_links l where l.student_id=attendance_records.student_id and l.school_id=attendance_records.school_id and l.parent_user_id=(select auth.uid()))
+);
+drop policy if exists homework_parent_or_staff_read on public.student_homework;
+create policy homework_parent_or_staff_read on public.student_homework for select to authenticated using (
+ exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=student_homework.school_id and p.role in ('owner','admin','teacher'))
+ or exists(select 1 from public.parent_student_links l where l.student_id=student_homework.student_id and l.school_id=student_homework.school_id and l.parent_user_id=(select auth.uid()))
+);
+drop policy if exists results_parent_or_staff_read on public.student_results;
+create policy results_parent_or_staff_read on public.student_results for select to authenticated using (
+ exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=student_results.school_id and p.role in ('owner','admin','teacher'))
+ or exists(select 1 from public.parent_student_links l where l.student_id=student_results.student_id and l.school_id=student_results.school_id and l.parent_user_id=(select auth.uid()))
+);
