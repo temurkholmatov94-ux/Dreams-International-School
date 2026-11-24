@@ -38,11 +38,11 @@ The school data row is already initialised. After the profile is added, sign in 
 The repository includes a GitHub Actions workflow for Pages. In GitHub, open Settings → Pages and set the source to GitHub Actions if it is not already selected. Then check the Actions tab for the deployment result.
 
 ## Roles and current limitations
-- Owner/admin: can edit and save the shared school data.
-- Teacher/accountant: currently read-only; specific workflows and granular permissions are not implemented yet.
-- Student/teacher/group/payment/expense data is currently stored as one JSON payload. This is an initial shared-data bridge, not yet a fully normalised production database.
-- The dashboard still contains demonstration records. Replace these with verified school records after signing in.
-- Before storing children's personal information, complete role-specific access controls, audit history, validation, backups, and privacy/retention procedures.
+- The live database uses normalized, school-scoped tables for students, groups, teachers, attendance, parent links, homework, results, exams, finance, timetable, academic settings, and audit history. The browser JSON workspace remains as a compatibility layer; it is not the sole data store.
+- Live RLS policies restrict student, homework, result, and attendance reads for teachers to students in groups assigned to that teacher. Owner/admin roles manage core student and group records; finance reads are limited to owner/admin/accountant roles.
+- Parent access is scoped through `parent_student_links`; parent users can read only linked students and their related attendance, homework, and result records.
+- The dashboard may still contain demonstration records. Verify data before treating it as the centre's official register.
+- RLS being enabled does not by itself complete production readiness. Role-based account tests, audit review, backups and restore drills, validation, and privacy/retention procedures are still required.
 
 ## Analytics and family portal update
 - Dashboard now includes student-by-group donut chart, daily attendance donut chart, and six-month income/expense bar chart.
@@ -68,5 +68,9 @@ The repository includes a GitHub Actions workflow for Pages. In GitHub, open Set
 The parent invitation Edge Function is deployed as `invite-parent` with JWT verification enabled. It redirects invitation links to the published website.
 
 
-### Teacher data permissions — security review
-The bootstrap schema now limits student and group record creation, editing, and deletion to owner/admin roles. Teachers retain read access under the school-scoped read policies and the attendance workflow remains separately governed. This change updates the repository schema only; it does not alter an already-provisioned Supabase database. Before using real student data, apply the matching policy migration in the live Supabase SQL Editor and verify the live policies under Database → Policies. Teacher access is currently school-wide for student/group reads and attendance; per-assigned-group isolation is not yet implemented.
+### Live database security review — checked 24 November 2026
+The connected Supabase database currently has RLS enabled on all 15 public tables. The live policies inspected on this date scope teacher access to assigned groups for student, attendance, homework, and result records; owner/admin roles manage students and groups; and parents are scoped through explicit student links. This is stronger than the older bootstrap-policy descriptions elsewhere in this repository.
+
+The current live profile inventory contained one owner and two parent profiles; no teacher or accountant profiles were present during this check. Therefore, the policy definitions have been inspected, but teacher and accountant behaviour has not yet been validated through signed-in test accounts. Create dedicated synthetic test accounts and verify cross-school and cross-student isolation before entering real children's data.
+
+**Important:** `supabase/schema.sql` is a bootstrap schema for a new project, not a safe migration for the already-provisioned live database. Do not re-run it against the live project as a blanket update. First reconcile its DDL, grants, constraints, and policies with the live catalog, then prepare and review a separate forward-only migration.
