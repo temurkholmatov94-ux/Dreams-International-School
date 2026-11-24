@@ -126,17 +126,17 @@ drop policy if exists groups_school_read on public.school_groups;
 create policy groups_school_read on public.school_groups for select to authenticated
 using (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=school_groups.school_id));
 drop policy if exists groups_staff_manage on public.school_groups;
-create policy groups_staff_manage on public.school_groups for all to authenticated
-using (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=school_groups.school_id and p.role in ('owner','admin','teacher')))
-with check (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=school_groups.school_id and p.role in ('owner','admin','teacher')));
+create policy groups_admin_manage on public.school_groups for all to authenticated
+using (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=school_groups.school_id and p.role in ('owner','admin')))
+with check (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=school_groups.school_id and p.role in ('owner','admin')));
 drop policy if exists students_school_or_parent_read on public.students;
 create policy students_school_or_parent_read on public.students for select to authenticated
 using (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=students.school_id and p.role in ('owner','admin','teacher','accountant'))
 or exists(select 1 from public.parent_student_links l where l.student_id=students.id and l.parent_user_id=(select auth.uid())));
 drop policy if exists students_staff_manage on public.students;
-create policy students_staff_manage on public.students for all to authenticated
-using (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=students.school_id and p.role in ('owner','admin','teacher')))
-with check (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=students.school_id and p.role in ('owner','admin','teacher')));
+create policy students_admin_manage on public.students for all to authenticated
+using (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=students.school_id and p.role in ('owner','admin')))
+with check (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=students.school_id and p.role in ('owner','admin')));
 drop policy if exists attendance_school_or_parent_read on public.attendance_records;
 create policy attendance_school_or_parent_read on public.attendance_records for select to authenticated
 using (exists(select 1 from public.school_profiles p where p.user_id=(select auth.uid()) and p.school_id=attendance_records.school_id and p.role in ('owner','admin','teacher','accountant'))
