@@ -9,10 +9,10 @@ const config = read('supabase-config.js');
 
 assert.match(html, /<html[^>]+lang="uz"/, 'The interface document language must be Uzbek.');
 assert.ok(html.includes('href="favicon.svg"'), 'The branded favicon must be linked.');
-assert.match(app, /const initial=\\{students:\\[\\],teachers:\\[\\],groups:\\[\\],payments:\\[\\],expenses:\\[\\]/, 'The application must not seed fake school records.');
-assert.match(app, /function cleanDemoRecords\\(data\\)/, 'Legacy demo-data cleanup must be available.');
-assert.match(app, /matches\\(x,r,\\['id','name','phone','group'\\]\\)/, 'Student cleanup must match full seeded record signatures, not names alone.');
-assert.match(app, /setData\\(data\\).*cleanDemoRecords/s, 'Cloud payload hydration must filter legacy demo records.');
+assert.ok(app.includes('const initial={students:[],teachers:[],groups:[],payments:[],expenses:[]'), 'The application must not seed fake school records.');
+assert.ok(app.includes('function cleanDemoRecords(data)'), 'Legacy demo-data cleanup must be available.');
+assert.ok(app.includes("matches(x,r,['id','name','phone','group'])"), 'Student cleanup must match full seeded record signatures, not names alone.');
+assert.ok(app.includes('setData(data){if(!data||typeof data!==\'object\')return;db=cleanDemoRecords'), 'Cloud payload hydration must filter legacy demo records.');
 
 for (const file of ['styles.css', 'supabase-config.js', 'app.js', 'cloud-auth.js', 'uzbek.js']) {
   assert.ok(html.includes(file), `index.html must load ${file}`);
