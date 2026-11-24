@@ -64,13 +64,17 @@ function persist(){
  const snapshot=JSON.parse(JSON.stringify(db));
  try{localStorage.setItem(STORE,JSON.stringify(snapshot))}
  catch(e){console.error('Local save failed:',e);notify('Local save failed: browser storage may be full')}
+ let syncResult=Promise.resolve({ok:true,localOnly:true});
  if(window.schoolCloud){
-  cloudSaveQueue=cloudSaveQueue.catch(()=>{}).then(()=>window.schoolCloud.save(snapshot)).catch(e=>{
+  cloudSaveQueue=cloudSaveQueue.catch(()=>{}).then(()=>window.schoolCloud.save(snapshot)).then(()=>({ok:true,cloud:true})).catch(e=>{
    console.error('Cloud sync failed:',e);
    notify('Cloud sync failed: '+(e.message||'check connection'));
+   return {ok:false,error:e};
   });
+  syncResult=cloudSaveQueue;
  }
  render();
+ return syncResult;
 }
 function notify(s){const t=document.querySelector('#toast');t.textContent=s;t.classList.add('show');clearTimeout(timer);timer=setTimeout(()=>t.classList.remove('show'),2400)}
 function stat(label,val,icon,foot){return '<article class="stat-card"><div class="stat-top">'+label+'<span class="stat-icon">'+icon+'</span></div><div class="stat-value">'+val+'</div><div class="stat-foot">'+foot+'</div></article>'}
@@ -488,7 +492,16 @@ document.querySelector('#recordForm').addEventListener('submit',e=>{
   db[modalType].push(row);closeModal();persist();notify('New '+modalType.slice(0,-1)+' saved');
  }
 });
-function saveAttendance(){document.querySelectorAll('.attendance-choice').forEach(el=>{db.attendance=db.attendance.filter(a=>!(a.student===el.dataset.student&&a.date===todayISO()));const student=db.students.find(s=>s.name===el.dataset.student);db.attendance.push({student:el.dataset.student,studentId:student?String(student.id):null,date:todayISO(),status:el.value})});persist();notify('Today’s attendance saved')}
+async function saveAttendance(){
+ document.querySelectorAll('.attendance-choice').forEach(el=>{
+  db.attendance=db.attendance.filter(a=>!(a.student===el.dataset.student&&a.date===todayISO()));
+  const student=db.students.find(s=>s.name===el.dataset.student);
+  db.attendance.push({student:el.dataset.student,studentId:student?String(student.id):null,date:todayISO(),status:el.value});
+ });
+ const result=await persist();
+ if(result?.ok)notify(result.localOnly?'Attendance saved in this browser only.':'Attendance saved to the school cloud.');
+ else notify('Attendance is saved locally, but cloud sync failed. Please retry before leaving this page.');
+}
 function csvExport(type){let arr=db[type]||[];if(!arr.length){notify('No records to export');return}let keys=Object.keys(arr[0]),csv=[keys.join(','),...arr.map(o=>keys.map(k=>'"'+String(o[k]??'').replace(/"/g,'""')+'"').join(','))].join('\n');download(csv,type+'-export.csv','text/csv')}
 function backup(){download(JSON.stringify(db,null,2),'dreams-school-backup.json','application/json');notify('Backup downloaded')}
 function download(content,name,mime){let a=document.createElement('a'),url=URL.createObjectURL(new Blob([content],{type:mime}));a.href=url;a.download=name;a.click();URL.revokeObjectURL(url)}
