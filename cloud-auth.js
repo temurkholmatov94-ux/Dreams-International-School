@@ -245,10 +245,11 @@
     const idByExternal=new Map((stored.data||[]).map(s=>[String(s.external_id),s.id]));
     const idByName=new Map((stored.data||[]).map(s=>[s.full_name,s.id]));
     const rows=(payload.attendance||[]).map(a=>{
+     const status=({'Keldi':'Present','Kelmadi':'Absent','Kechikdi':'Late'}[a.status]||a.status);
      const external=String(a.studentId??(payload.students||[]).find(s=>s.name===a.student)?.id??'');
      const studentId=idByExternal.get(external)||idByName.get(a.student);
-     if(!studentId||!a.date||!['Present','Absent','Late','Excused'].includes(a.status))return null;
-     return {school_id:profile.school_id,student_id:studentId,attendance_date:a.date,status:a.status,marked_by:session.user.id};
+     if(!studentId||!a.date||!['Present','Absent','Late','Excused'].includes(status))return null;
+     return {school_id:profile.school_id,student_id:studentId,attendance_date:a.date,status,marked_by:session.user.id};
     }).filter(Boolean);
     if(rows.length){
      const saved=await sb.from('attendance_records').upsert(rows,{onConflict:'student_id,attendance_date'});
